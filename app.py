@@ -2,7 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_smorest import Api
 
-from src.classes import DbPopulator
+from src.Enums import MatchStatus
+from src.classes import DbPopulator, ApiScrapper
 
 db = SQLAlchemy()
 api = Api()
@@ -23,10 +24,16 @@ def create_app():
     # Register blueprints
     # api.register_blueprint()
 
-    @app.route('/')
-    def prueba():
-        db_populator = DbPopulator(db)
-        db_populator.populate_teams(1045)
+    @app.route('/seasons')
+    def seasons():
+        populator = DbPopulator(db)
+        populator.populate_seasons(2023)
+        return "Seasons added to the database"
+
+    @app.route('/teams')
+    def teams():
+        populator = DbPopulator(db)
+        populator.populate_teams(1045)
         return "Teams added to the database"
 
     return app
@@ -34,4 +41,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(host=None, port=5000, debug=False)
+    app.run(host=None, port=5000, debug=True)

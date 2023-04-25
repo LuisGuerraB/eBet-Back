@@ -5,7 +5,7 @@ from src.models import Team,Match
 class Result(db.Model):
     __tablename__ = 'result'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     gold_percent = db.Column(db.Float(precision=2))
     exp_percent = db.Column(db.Float(precision=2))
     elders = db.Column(db.Integer)
@@ -18,8 +18,9 @@ class Result(db.Model):
     deaths = db.Column(db.Integer)
     assists = db.Column(db.Integer)
 
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
-    match_id = db.Column(db.Integer, db.ForeignKey('match.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
+    set = db.Column(db.Integer, nullable=False)
 
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='results')
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
