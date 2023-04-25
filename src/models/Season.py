@@ -9,6 +9,7 @@ class Season(db.Model):
     name = db.Column(db.String(), unique=True, nullable=False)
     season_id = db.Column(db.Integer(), nullable=False)
     season = db.Column(db.Enum(SeasonsEnum))
+    regular = db.Column(db.Boolean(), nullable=False)
     ini_date = db.Column(db.Date(), nullable=False)
     end_date = db.Column(db.Date(), nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))

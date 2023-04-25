@@ -41,6 +41,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('season_id', sa.Integer(), nullable=False),
     sa.Column('season', sa.Enum(name='seasonsenum'), nullable=True),
+    sa.Column('regular', sa.Boolean(), nullable=False),
     sa.Column('ini_date', sa.Date(), nullable=False),
     sa.Column('end_date', sa.Date(), nullable=False),
     sa.Column('league_id', sa.Integer(), nullable=True),
