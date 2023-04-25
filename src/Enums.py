@@ -6,3 +6,7 @@ class SeasonsEnum(Enum):
     'WINTER'
     'SUMMER'
     'SPRING'
+
+class MatchStatus(Enum):
+    'not_started'
+    'finished'
