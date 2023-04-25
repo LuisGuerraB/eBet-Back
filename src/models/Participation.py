@@ -2,7 +2,7 @@ from app import db
 
 
 class Participation(db.Model):
-    __tablename__ = 'participacion'
+    __tablename__ = 'participation'
 
     id = db.Column(db.Integer, primary_key=True)
     position = db.Column(db.Integer)
