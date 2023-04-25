@@ -7,6 +7,7 @@ class Season(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), unique=True, nullable=False)
+    season_id = db.Column(db.Integer(), nullable=False)
     season = db.Column(db.Enum(SeasonsEnum))
     ini_date = db.Column(db.Date(), nullable=False)
     end_date = db.Column(db.Date(), nullable=False)

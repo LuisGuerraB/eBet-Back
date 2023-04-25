@@ -39,6 +39,7 @@ def upgrade() -> None:
     op.create_table('season',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('season_id', sa.Integer(), nullable=False),
     sa.Column('season', sa.Enum(name='seasonsenum'), nullable=True),
     sa.Column('ini_date', sa.Date(), nullable=False),
     sa.Column('end_date', sa.Date(), nullable=False),
