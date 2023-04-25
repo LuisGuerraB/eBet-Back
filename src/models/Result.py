@@ -1,4 +1,5 @@
 from app import db
+from src.models import Team,Match
 
 
 class Result(db.Model):

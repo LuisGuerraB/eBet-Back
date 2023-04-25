@@ -1,5 +1,6 @@
 from app import db
 from src.Enums import SeasonsEnum
+from src.models import Participation,League,Match
 
 
 class Season(db.Model):

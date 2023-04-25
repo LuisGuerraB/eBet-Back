@@ -34,7 +34,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['esport_id'], ['esport.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('img'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name'),
+    sa.UniqueConstraint('acronym')
     )
     op.create_table('season',
     sa.Column('id', sa.Integer(), nullable=False),
