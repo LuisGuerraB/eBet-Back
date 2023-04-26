@@ -6,6 +6,7 @@ class Result(db.Model):
     __tablename__ = 'result'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    winner = db.Column(db.Boolean,nullable=False)
     gold_percent = db.Column(db.Float(precision=2))
     exp_percent = db.Column(db.Float(precision=2))
     elders = db.Column(db.Integer)
@@ -24,3 +25,10 @@ class Result(db.Model):
 
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='results')
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
+
+    @classmethod
+    def create_from_web_json(cls,json):
+        pass
+
+    def __obatin_percentage(self):
+        pass

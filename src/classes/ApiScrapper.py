@@ -27,21 +27,7 @@ class ApiScrapper:
         })
         return r.json().get('data').get('pagedAllMatches')
 
-    def get_match_result(self, match_id, set=1):
-        r = requests.post(self.url + "/matches/graphql", json=
-        {
-            'operationName': "GetGameByMatch",
-            'query': "fragment CoreTeam on Team {\n  id\n  name\n  acronym\n  imageUrl\n  nationality\n  website\n  }\n\n" +
-                     "fragment CoreGameTeam on GameTeam {\n  team {\n    ...CoreTeam\n      }\n  kills\n  deaths\n  assists\n  towerKills\n  inhibitorKills\n  heraldKills\n  dragonKills\n  elderDrakeKills\n  baronKills\n  goldEarned\n  }\n\n" +
-                     "fragment CoreGame on Game {\n  id\n  beginAt\n  endAt\n finished\n  length\n  winner {\n    ...CoreTeam\n      }\n  teams {\n    ...CoreGameTeam\n    frames {\n      gold\n      xp\n      timestamp\n          }\n      }\n   }\n\n" +
-                     "query GetGameByMatch($matchId: ID!, $set: Int) {\n  gameByMatch(matchId: $matchId, set: $set) {\n    ...CoreGame\n      }\n}",
-            'variables':
-                {
-                    'matchId': match_id,
-                    'set': set
-                }
-        })
-        return r.json().get('data').get('gameByMatch')
+
 
     def get_teams(self, season_id: int):
         r = requests.post(self.url + "/matches/graphql", json=

@@ -1,6 +1,6 @@
 from src.Enums import MatchStatus
 from src.classes.ApiScrapper import ApiScrapper
-from src.models import Match, Season, League
+from src.models import Match, Season, League, Result
 from src.models.Team import Team
 
 
@@ -14,7 +14,7 @@ class DbPopulator:
         match_list = self.api.get_list_match(status, year, month, leagueId, limit, page)
         for match in match_list:
             if self.db.session.get(Match, match.get('id')) is None:
-                match = Match(
+                match_obj = Match(
                     id=match.get('id'),
                     name=match.get('name'),
                     plan_date=match.get('scheduledAt'),
@@ -22,12 +22,13 @@ class DbPopulator:
                     local_team_id=match.get('homeTeamId'),
                     season_id=match.get('tournamentId')
                 )
-                if (self.db.session.get(Team, match.away_team_id) is None or self.db.session.get(Team,
-                                                                                                 match.local_team_id) is None):
-                    self.populate_teams(match.season_id)
-                if self.db.session.get(Season, match.season_id) is None:
-                    self.populate_seasons(match.scheduledAt.year)
-                self.db.session.add(match)
+                if (self.db.session.get(Team, match.get('awayTeamId')) is None or self.db.session.get(Team,
+                                                                                                      match.get(
+                                                                                                          'homeTeamId')) is None):
+                    self.populate_teams(match.get('tournamentId'))
+                if self.db.session.get(Season, match.get('tournamentId')) is None:
+                    self.populate_seasons(match.get('scheduledAt')[:4])
+                self.db.session.add(match_obj)
         self.db.session.commit()
 
     def populate_seasons(self, year):
@@ -56,19 +57,6 @@ class DbPopulator:
         self.db.session.commit()
         return
 
-    def populate_result(self, match_id, set=1):
-        load = True
-        result = self.api.get_match_result(match_id, set)
-        if (result):  # If there is a result to get for the match pass
-            # TODO get_item_or_create
-            match = self.db.session.get(Match, match_id)
-            if (match == None):  # If doesn't exist match at DB
-                pass  # Should create it
-            for result in match.results:
-                if result.set == set:
-                    load = False
-            if load:
-                pass
 
     def populate_teams(self, season_id):
         team_list = self.api.get_teams(season_id)
