@@ -1,12 +1,23 @@
 from app import db
-from src.models import Team,Match
+from src.models import Team, Match
+
+
+def obtain_percentage(json_frame, json_frame_opposite, type):
+    total = len(json_frame)
+    count = 0
+    for i in range(total):
+        if json_frame[i].get(type) > json_frame_opposite[i].get(type):
+            count += 1
+    if type == 'xp':
+        total -= 2
+    return count / float(total)
 
 
 class Result(db.Model):
     __tablename__ = 'result'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    winner = db.Column(db.Boolean,nullable=False)
+    winner = db.Column(db.Boolean, nullable=False)
     gold_percent = db.Column(db.Float(precision=2))
     exp_percent = db.Column(db.Float(precision=2))
     elders = db.Column(db.Integer)
@@ -27,8 +38,28 @@ class Result(db.Model):
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
 
     @classmethod
-    def create_from_web_json(cls,json):
-        pass
-
-    def __obatin_percentage(self):
-        pass
+    def create_from_web_json(cls, json, match_id, set):
+        winner_id = json.get('winner').get('id')
+        teams = json.get('teams')
+        n_teams = len(teams)
+        result = []
+        for i in range(n_teams):
+            team = teams[i]
+            result.append(Result(
+                winner=team.get('team').get('id') == winner_id,
+                gold_percent=obtain_percentage(team.get('frames'), teams[(i + 1) % n_teams].get('frames'), 'gold'),
+                exp_percent=obtain_percentage(team.get('frames'), teams[(i + 1) % n_teams].get('frames'), 'xp'),
+                elders=team.get('elderDrakeKills'),
+                towers=team.get('towerKills'),
+                drakes=team.get('dragonKills'),
+                inhibitors=team.get('inhibitorKills'),
+                barons=team.get('baronKills'),
+                heralds=team.get('heraldKills'),
+                kills=team.get('kills'),
+                deaths=team.get('deaths'),
+                assists=team.get('assists'),
+                team_id=team.get('team').get('id'),
+                match_id=match_id,
+                set=set
+            ))
+        return result

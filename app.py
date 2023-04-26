@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_smorest import Api
 
 from src.Enums import MatchStatus
-#from src.classes import DbPopulator, ApiScrapper
+from src.classes import DbPopulator
 
 db = SQLAlchemy()
 api = Api()
@@ -24,7 +24,7 @@ def create_app():
 
     # Register blueprints
     # api.register_blueprint()
-    #populator = DbPopulator(db)
+    populator = DbPopulator(db)
 
     @app.route('/seasons')
     def seasons():
@@ -38,8 +38,13 @@ def create_app():
 
     @app.route('/matchs')
     def matchs():
-        populator.populate_matchs(MatchStatus.FINISHED, year=2023, limit=50)
+        populator.populate_matchs(MatchStatus.FINISHED, year=2023, limit=50, page=0)
         return "Matchs added to the database"
+
+    @app.route('/results')
+    def results():
+        populator.populate_result(21441,3)
+        return "Results added to the database"
 
     return app
 
