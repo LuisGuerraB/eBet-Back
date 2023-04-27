@@ -1,8 +1,6 @@
 from enum import Enum
 
 
-class SeasonsEnum(Enum):
-    'AUTUMN'
-    'WINTER'
-    'SUMMER'
-    'SPRING'
+class MatchStatus(Enum):
+    NOT_STARTED = 'not_started'
+    FINISHED = 'finished'

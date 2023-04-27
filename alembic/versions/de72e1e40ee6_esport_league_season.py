@@ -34,20 +34,18 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['esport_id'], ['esport.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('img'),
-    sa.UniqueConstraint('name')
+    sa.UniqueConstraint('name'),
+    sa.UniqueConstraint('acronym')
     )
     op.create_table('season',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('season_id', sa.Integer(), nullable=False),
-    sa.Column('season', sa.Enum(name='seasonsenum'), nullable=True),
-    sa.Column('regular', sa.Boolean(), nullable=False),
+    sa.Column('serie_id', sa.Integer(), nullable=False),
     sa.Column('ini_date', sa.Date(), nullable=False),
-    sa.Column('end_date', sa.Date(), nullable=False),
+    sa.Column('end_date', sa.Date(), nullable=True),
     sa.Column('league_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['league_id'], ['league.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
 
@@ -57,5 +55,4 @@ def downgrade() -> None:
     op.drop_table('season')
     op.drop_table('league')
     op.drop_table('esport')
-    op.execute('DROP TYPE seasonsenum')
     # ### end Alembic commands ###

@@ -1,4 +1,5 @@
 from app import db
+from src.models import Season,Team
 
 
 class Participation(db.Model):
@@ -10,5 +11,5 @@ class Participation(db.Model):
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'))
 
 
-    season: db.Mapped['Season'] = db.relationship('Season', back_populates='participations')
-    team: db.Mapped['Team'] = db.relationship('Team', back_populates='participations')
+    season: db.Mapped['Season'] = db.relationship('Season', back_populates='teams')
+    team: db.Mapped['Team'] = db.relationship('Team', back_populates='seasons')
