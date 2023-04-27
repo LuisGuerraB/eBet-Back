@@ -46,6 +46,15 @@ def create_app():
         populator.populate_result(21441,3)
         return "Results added to the database"
 
+    @app.route('/populate')
+    def populate():
+        populator.populate_DB()
+        return "DB its complete with data of this year"
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
+
     return app
 
 

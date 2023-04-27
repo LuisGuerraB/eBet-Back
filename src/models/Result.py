@@ -1,15 +1,19 @@
+from sqlalchemy import Index
+
 from app import db
 from src.models import Team, Match
 
 
 def obtain_percentage(json_frame, json_frame_opposite, type):
-    total = len(json_frame)
+    if len(json_frame) == 0 or len(json_frame_opposite) == 0:
+        return 0.00
+    total = len(json_frame) - 1
     count = 0
     for i in range(total):
-        if json_frame[i].get(type) > json_frame_opposite[i].get(type):
+        if json_frame[i + 1][type] > json_frame_opposite[i + 1][type]:
             count += 1
     if type == 'xp':
-        total -= 2
+        total -= 1
     return count / float(total)
 
 
@@ -37,28 +41,30 @@ class Result(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='results')
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
 
+    __table_args__ = (Index('idx_match_set_team', 'match_id', 'set', 'team_id'),)
+
     @classmethod
     def create_from_web_json(cls, json, match_id, set):
-        winner_id = json.get('winner').get('id')
-        teams = json.get('teams')
+        winner_id = json['winner']['id']
+        teams = json['teams']
         n_teams = len(teams)
         result = []
         for i in range(n_teams):
             team = teams[i]
             result.append(Result(
-                winner=team.get('team').get('id') == winner_id,
-                gold_percent=obtain_percentage(team.get('frames'), teams[(i + 1) % n_teams].get('frames'), 'gold'),
-                exp_percent=obtain_percentage(team.get('frames'), teams[(i + 1) % n_teams].get('frames'), 'xp'),
-                elders=team.get('elderDrakeKills'),
-                towers=team.get('towerKills'),
-                drakes=team.get('dragonKills'),
-                inhibitors=team.get('inhibitorKills'),
-                barons=team.get('baronKills'),
-                heralds=team.get('heraldKills'),
-                kills=team.get('kills'),
-                deaths=team.get('deaths'),
-                assists=team.get('assists'),
-                team_id=team.get('team').get('id'),
+                winner=team['team']['id'] == winner_id,
+                gold_percent=obtain_percentage(team['frames'], teams[(i + 1) % n_teams]['frames'], 'gold'),
+                exp_percent=obtain_percentage(team['frames'], teams[(i + 1) % n_teams]['frames'], 'xp'),
+                elders=team['elderDrakeKills'],
+                towers=team['towerKills'],
+                drakes=team['dragonKills'],
+                inhibitors=team['inhibitorKills'],
+                barons=team['baronKills'],
+                heralds=team['heraldKills'],
+                kills=team['kills'],
+                deaths=team['deaths'],
+                assists=team['assists'],
+                team_id=team['team']['id'],
                 match_id=match_id,
                 set=set
             ))

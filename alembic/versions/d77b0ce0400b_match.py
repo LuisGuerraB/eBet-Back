@@ -20,6 +20,7 @@ def upgrade() -> None:
     op.create_table('match',
                     sa.Column('id', sa.Integer(), nullable=False),
                     sa.Column('name', sa.String(), nullable=False),
+                    sa.Column('sets',sa.Integer(),nullable=False),
                     sa.Column('plan_date', sa.DateTime(), nullable=False),
                     sa.Column('ini_date', sa.DateTime(), nullable=True),
                     sa.Column('end_date', sa.DateTime(), nullable=True),

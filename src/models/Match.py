@@ -7,6 +7,7 @@ class Match(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    sets = db.Column(db.Integer, nullable=False)
     plan_date = db.Column(db.DateTime, nullable=False)
     ini_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
