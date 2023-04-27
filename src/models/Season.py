@@ -1,5 +1,5 @@
-from app import db
-from src.models import Participation,League,Match
+from database import db
+from src.models import Participation, League, Match
 
 
 class Season(db.Model):

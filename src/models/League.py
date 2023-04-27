@@ -1,5 +1,5 @@
-from app import db
-from src.models import Esport,Season
+from database import db
+from src.models import Esport, Season
 
 
 class League(db.Model):

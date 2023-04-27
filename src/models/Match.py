@@ -1,5 +1,5 @@
-from app import db
-from src.models import Team,Season,Result
+from database import db
+from src.models import Team, Season, Result
 
 
 class Match(db.Model):

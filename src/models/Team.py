@@ -1,6 +1,5 @@
-from app import db
+from database import db
 from src.models import Participation, Result, Match
-
 
 class Team(db.Model):
     __tablename__ = 'team'

@@ -1,11 +1,10 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from database import db
 from flask_smorest import Api
 
 from src.Enums import MatchStatus
 from src.classes import DbPopulator
 
-db = SQLAlchemy()
 api = Api()
 
 

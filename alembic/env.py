@@ -2,10 +2,11 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from database import db
 
 from alembic import context
 
-from app import db
+from flask_sqlalchemy import SQLAlchemy
 from src.models import League, Esport, Season, Participation, Team, Match, Result
 
 # this is the Alembic Config object, which provides
