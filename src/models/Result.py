@@ -4,7 +4,7 @@ from src.models import Team, Match
 
 def obtain_percentage(json_frame, json_frame_opposite, type):
     if len(json_frame) == 0 or len(json_frame_opposite) == 0:
-        return 0.00
+        return -1.00
     total = len(json_frame) - 1
     count = 0
     for i in range(total):
@@ -20,8 +20,8 @@ class Result(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     winner = db.Column(db.Boolean, nullable=False)
-    gold_percent = db.Column(db.Float(precision=2))
-    exp_percent = db.Column(db.Float(precision=2))
+    gold_percent = db.Column(db.Float(2))
+    exp_percent = db.Column(db.Float(2))
     elders = db.Column(db.Integer)
     towers = db.Column(db.Integer)
     drakes = db.Column(db.Integer)

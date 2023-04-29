@@ -5,6 +5,7 @@ from .Participation import Participation
 from .Result import Result
 from .Season import Season
 from .Team import Team
+from .Probability import Probability
 
 __all__ = [
     'Esport',
@@ -13,5 +14,6 @@ __all__ = [
     'Participation',
     'Result',
     'Season',
-    'Team'
+    'Team',
+    'Probability'
 ]
