@@ -1,3 +1,6 @@
+from marshmallow.schema import Schema
+from marshmallow import fields, validate
+
 from src.enums import MatchStatus
 from src.classes.prob_calculator import ProbCalculator
 from src.classes.api_scrapper import ApiScrapper
@@ -9,7 +12,6 @@ class DbPopulator:
 
     def __init__(self, db):
         self.db = db
-
         self.prob = ProbCalculator(db)
 
     def populate_DB(self):
@@ -63,31 +65,30 @@ class DbPopulator:
         session.commit()
         return match_list_result
 
-    def populate_seasons(self, year, month):
+    def populate_seasons(self, session, year, month):
         season_list = ApiScrapper.get_seasons(year, month)
-        with self.db.session() as session:
-            for season_json in season_list:
-                season_obj = session.get(Season, season_json['id'])
-                if season_obj is None:
-                    league_json = season_json['serie']['league']
-                    if session.get(League, league_json['id']) is None:
-                        league_obj = League(
-                            id=league_json['id'],
-                            name=league_json['name'],
-                            acronym=league_json['shortName'],
-                            img=league_json['imageUrl'],
-                        )
-                        session.add(league_obj)
-                    season_obj = Season(
-                        id=season_json['id'],
-                        name=season_json['name'],
-                        serie_id=season_json['serie']['id'],
-                        ini_date=season_json['beginAt'],
-                        end_date=season_json['endAt'],
-                        league_id=league_json['id']
+        for season_json in season_list:
+            season_obj = session.get(Season, season_json['id'])
+            if season_obj is None:
+                league_json = season_json['serie']['league']
+                if session.get(League, league_json['id']) is None:
+                    league_obj = League(
+                        id=league_json['id'],
+                        name=league_json['name'],
+                        acronym=league_json['shortName'],
+                        img=league_json['imageUrl'],
                     )
-                    session.add(season_obj)
-            session.commit()
+                    session.add(league_obj)
+                season_obj = Season(
+                    id=season_json['id'],
+                    name=season_json['name'],
+                    serie_id=season_json['serie']['id'],
+                    ini_date=season_json['beginAt'],
+                    end_date=season_json['endAt'],
+                    league_id=league_json['id']
+                )
+                session.add(season_obj)
+        session.commit()
 
     def populate_result(self, session, match_id, set=1):
         load = True
@@ -106,19 +107,29 @@ class DbPopulator:
                 session.add(result_obj_2)
                 session.commit()
 
-    def populate_teams(self, season_id):
+    def populate_teams(self, session, season_id):
         team_list = ApiScrapper.get_teams(season_id)
-        with self.db.session() as session:
-            for team in team_list:
-                team_json = team['team']
-                if session.get(Team, team_json['id']) is None:
-                    team_obj = Team(
-                        id=int(team_json['id']),
-                        name=team_json['name'],
-                        acronym=team_json['acronym'],
-                        img=team_json['imageUrl'],
-                        website=team_json['website'],
-                        nationality=team_json['nationality'],
-                    )
-                    session.add(team_obj)
-            session.commit()
+        for team in team_list:
+            team_json = team['team']
+            if session.get(Team, team_json['id']) is None:
+                team_obj = Team(
+                    id=int(team_json['id']),
+                    name=team_json['name'],
+                    acronym=team_json['acronym'],
+                    img=team_json['imageUrl'],
+                    website=team_json['website'],
+                    nationality=team_json['nationality'],
+                )
+                session.add(team_obj)
+        session.commit()
+
+
+class MatchPopulateSchema(Schema):
+    status = fields.Enum(MatchStatus, required=True, metadata={'description': '#### Status of matches'})
+    year = fields.Integer(required=False, validate=validate.Range(min=2020, max=2023),
+                          metadata={'description': '#### Year of the matches'})
+    month = fields.Integer(required=False, validate=validate.Range(min=1, max=12),
+                           metadata={'description': '#### Month of the matches'})
+    leagueId = fields.Integer(required=False, default=None, metadata={'description': '#### League of the matches'})
+    limit = fields.Integer(required=False, default=50, metadata={'description': '#### Number of matches you want'})
+    page = fields.Integer(required=False, default=0, metadata={'description': '#### Page you want'})
