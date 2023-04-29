@@ -1,6 +1,7 @@
 from flask import Flask
 from database import db
 from flask_smorest import Api
+from flask_swagger import swagger
 
 from src.Enums import MatchStatus
 from src.classes import DbPopulator
@@ -16,6 +17,7 @@ def create_app():
     app.config["OPENAPI_VERSION"] = "3.0.2"
     app.config["OPENAPI_URL_PREFIX"] = "apidocs"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "swagger"
+    app.config["OPENAPI_SWAGGER_UI_VERSION"] = "3.22.2"
 
     # Initialize extensions
     db.init_app(app)
@@ -35,10 +37,10 @@ def create_app():
         populator.populate_teams(1045)
         return "Teams added to the database"
 
-    @app.route('/matchs')
-    def matchs():
-        populator.populate_matchs(MatchStatus.FINISHED, year=2023, limit=50, page=0)
-        return "Matchs added to the database"
+    @app.route('/matches')
+    def matches():
+        populator.populate_matches(MatchStatus.FINISHED, year=2023, limit=50, page=0)
+        return "Matches added to the database"
 
     @app.route('/results')
     def results():

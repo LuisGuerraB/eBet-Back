@@ -4,10 +4,11 @@ from src.Enums import MatchStatus
 
 
 class ApiScrapper:
-    url = 'https://esports.op.gg/'
+    URL = 'https://esports.op.gg/'
 
-    def get_list_match(self, status: MatchStatus, year=None, month=None, leagueId=None, limit=5, page=0):
-        r = requests.post(self.url + "/matches/graphql", json=
+    @classmethod
+    def get_list_match(cls, status: MatchStatus, year=None, month=None, leagueId=None, limit=5, page=0):
+        r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "ListPagedAllMatches",
             'query': "fragment CoreLeague on League {\n  id\n }\n\n" +
@@ -27,11 +28,12 @@ class ApiScrapper:
         })
         return r.json()['data']['pagedAllMatches']
 
-    def get_match_result(self, match_id: int, set=1):
+    @classmethod
+    def get_match_result(cls, match_id: int, set=1):
         count = 0
         while True:
             count += 1
-            r = requests.post(self.url + "/matches/graphql", json=
+            r = requests.post(cls.URL + "/matches/graphql", json=
             {
                 'operationName': "GetGameByMatch",
                 'query': "fragment CoreTeam on Team {\n  id\n  name\n  acronym\n  imageUrl\n  nationality\n  website\n  }\n\n" +
@@ -44,12 +46,13 @@ class ApiScrapper:
                         'set': set
                     }
             })
-            if r.status_code == 200 or count > 2:
+            if r.status_code != 502 or count > 2:
                 break
         return r.json()['data']['gameByMatch']
 
-    def get_teams(self, season_id: int):
-        r = requests.post(self.url + "/matches/graphql", json=
+    @classmethod
+    def get_teams(cls, season_id: int):
+        r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "TournamentStandings",
             'query': "fragment CoreTeam on Team {\n  id\n  name\n  acronym\n  imageUrl\n  nationality\n  foundedAt\n  imageUrlDarkMode\n  imageUrlLightMode\n  youtube\n  twitter\n  facebook\n  instagram\n  discord\n  website\n}\n\n" +
@@ -62,8 +65,9 @@ class ApiScrapper:
         })
         return r.json()['data']['standings']
 
-    def get_seasons(self, year: int, month: int):
-        r = requests.post(self.url + "/matches/graphql", json=
+    @classmethod
+    def get_seasons(cls, year: int, month: int):
+        r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "ListPagedAllMatches",
             'query': "fragment CoreLeague on League {\n id\n name\n shortName\n imageUrl\n region\n}\n\n" +

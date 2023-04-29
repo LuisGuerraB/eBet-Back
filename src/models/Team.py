@@ -1,5 +1,6 @@
 from database import db
-from src.models import Participation, Result, Match
+from src.models import Participation, Result, Match, Probability
+
 
 class Team(db.Model):
     __tablename__ = 'team'
@@ -13,6 +14,7 @@ class Team(db.Model):
 
     seasons: db.Mapped[list['Participation']] = db.relationship(back_populates='team')
     results: db.Mapped[list['Result']] = db.relationship(back_populates='team')
+    probabilities: db.Mapped[list['Probability']] = db.relationship(back_populates='team')
     matches: db.Mapped[list['Match']] = db.relationship('Match', secondary='match',
                                                         primaryjoin='or_(Team.id == Match.local_team_id, Team.id == Match.away_team_id)',
                                                         secondaryjoin='or_(Team.id == Match.local_team_id, Team.id == Match.away_team_id)')
