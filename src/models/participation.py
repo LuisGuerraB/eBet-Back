@@ -1,5 +1,4 @@
 from database import db
-from src.models import Season, Team
 
 
 class Participation(db.Model):

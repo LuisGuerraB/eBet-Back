@@ -1,6 +1,6 @@
 import requests
 
-from src.Enums import MatchStatus
+from src.enums import MatchStatus
 
 
 class ApiScrapper:

@@ -1,5 +1,4 @@
 from database import db
-from src.models import Participation, Result, Match, Probability
 
 
 class Team(db.Model):

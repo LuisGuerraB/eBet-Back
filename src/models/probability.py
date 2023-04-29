@@ -1,7 +1,6 @@
 from sqlalchemy.orm import validates
 
 from database import db
-from src.models import Team
 
 
 def calc_len_min(prob_ini, jump):

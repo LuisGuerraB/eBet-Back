@@ -1,5 +1,4 @@
 from database import db
-from src.models import Participation, League, Match
 
 
 class Season(db.Model):

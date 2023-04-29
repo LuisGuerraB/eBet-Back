@@ -1,6 +1,6 @@
-from src.Enums import MatchStatus
-from src.classes.ProbCalculator import ProbCalculator
-from src.classes.ApiScrapper import ApiScrapper
+from src.enums import MatchStatus
+from src.classes.prob_calculator import ProbCalculator
+from src.classes.api_scrapper import ApiScrapper
 from src.models import Match, Season, League, Result, Team, Probability
 import datetime
 

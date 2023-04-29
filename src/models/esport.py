@@ -1,5 +1,4 @@
 from database import db
-from src.models import League
 
 class Esport(db.Model):
     __tablename__ = 'esport'

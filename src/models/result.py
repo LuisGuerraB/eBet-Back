@@ -1,6 +1,5 @@
 from sqlalchemy import Index
 from database import db
-from src.models import Team, Match
 
 def obtain_percentage(json_frame, json_frame_opposite, type):
     if len(json_frame) == 0 or len(json_frame_opposite) == 0:

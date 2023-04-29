@@ -1,5 +1,4 @@
 from database import db
-from src.models import Team, Season, Result
 
 
 class Match(db.Model):

@@ -1,11 +1,11 @@
-from .Esport import Esport
-from .League import League
-from .Match import Match
-from .Participation import Participation
-from .Result import Result
-from .Season import Season
-from .Team import Team
-from .Probability import Probability
+from .esport import Esport
+from .league import League
+from .match import Match
+from .participation import Participation
+from .result import Result
+from .season import Season
+from .team import Team
+from .probability import Probability
 
 __all__ = [
     'Esport',

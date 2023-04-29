@@ -1,9 +1,7 @@
 from flask import Flask
 from database import db
 from flask_smorest import Api
-from flask_swagger import swagger
-
-from src.Enums import MatchStatus
+from src.enums import MatchStatus
 from src.classes import DbPopulator
 
 api = Api()
