@@ -1,3 +1,4 @@
+from marshmallow import Schema, fields
 from sqlalchemy.orm import validates
 
 from database import db
@@ -134,3 +135,21 @@ class Probability(db.Model):
             print('putadon', len(list))
 
         return [prob_i / 100.00 for prob_i in prob_res]
+
+
+class ProbabilitySchema(Schema):
+    id = fields.Integer(metadata={'description': '#### Id of the Probability'})
+    prob_win = fields.Float(metadata={'description': '#### Probability of wining the game'})
+    prob_gold = fields.Float(metadata={'description': '#### Probability of wining in gold'})
+    prob_exp = fields.Float(metadata={'description': '#### Probability of wining in exp'})
+    prob_towers = fields.Integer(metadata={'description': '#### Probability of towers'})
+    prob_drakes = fields.Integer(metadata={'description': '#### Probability of drakes'})
+    prob_inhibitors = fields.Integer(metadata={'description': '#### Probability of inhibitors'})
+    prob_elders = fields.Integer(metadata={'description': '#### Probability of elders'})
+    prob_barons = fields.Integer(metadata={'description': '#### Probability of barons'})
+    prob_heralds = fields.Integer(metadata={'description': '#### Probability of heralds'})
+    prob_kills = fields.Integer(metadata={'description': '#### Probability of kills'})
+    prob_deaths = fields.Integer(metadata={'description': '#### Probability of deaths'})
+    prob_assists = fields.Integer(metadata={'description': '#### Probability of assists'})
+    team_id = fields.Integer(metadata={'description': '#### TeamId of the Probability'})
+    season_id = fields.Integer(metadata={'description': '#### SeasonId of the Probability'})

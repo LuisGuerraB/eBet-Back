@@ -66,7 +66,7 @@ class ApiScrapper:
         return r.json()['data']['standings']
 
     @classmethod
-    def get_seasons(cls, year: int, month: int):
+    def get_seasons(cls, status: MatchStatus, year: int, month: int):
         r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "ListPagedAllMatches",
@@ -77,7 +77,7 @@ class ApiScrapper:
                      "query ListPagedAllMatches($status: String!, $leagueId: ID, $teamId: ID, $page: Int, $year: Int, $month: Int, $limit: Int) {\n  pagedAllMatches(\n    status: $status\n    leagueId: $leagueId\n    teamId: $teamId\n    page: $page\n    year: $year\n    month: $month\n    limit: $limit\n  ) {\n    ...CoreMatch\n    tournament {\n      ...CoreTournament\n      serie {\n        league {\n          shortName\n          region\n                  }\n        year\n        season\n              }\n          }\n      }\n}",
             'variables':
                 {
-                    'status': MatchStatus.FINISHED.value,
+                    'status': status.value,
                     'leagueId': None,
                     'limit': 200,
                     'year': year,

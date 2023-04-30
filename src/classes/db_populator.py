@@ -17,38 +17,47 @@ class DbPopulator:
     def populate_DB(self):
         today = datetime.date.today()
         year = today.year
-        year = year - 1
+        actual_month = today.month
         limit = 500
         total_matches_with_results = []
         with self.db.session() as session:
-            teams = session.query(Team).all()
-            for team in teams:
-                self.prob.create_probabilities_from_team_at_season(session, team.id)
 
-            print('va por los teams')
-            for month in range(1, 13):
+            # Fill the DB with matchs that have not yet occured
+            for month in range(actual_month, 13):
+                self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
+
+            # Fill the DB with matchs that have finished
+            for month in range(1, actual_month + 1):
                 matches_finished_list = self.populate_matches(session, MatchStatus.FINISHED, year=year, month=month,
                                                               limit=limit)
                 total_matches_with_results += matches_finished_list
 
-            print('populate_results')
+            # Fill the DB with the results of finished matches
             for match in total_matches_with_results:
                 for set in range(match.sets):
                     result = session.query(Result).filter_by(match_id=match.id, set=set + 1).first()
                     if result is None:
                         self.populate_result(session, match.id, set + 1)
 
+            # Fill the DB with the probabilities of teams in general
+            teams = session.query(Team).all()
+            for team in teams:
+                self.prob.create_probabilities_from_team_at_season(session, team.id)
+
     def populate_matches(self, session, status, year=None, month=None, leagueId=None, limit=5, page=0):
         match_list = ApiScrapper.get_list_match(status, year, month, leagueId, limit, page)
         match_list_result = []
         for match_json in match_list:
+            if match_json['awayTeamId'] is None or match_json['homeTeamId'] is None:
+                continue
             match_obj = session.get(Match, match_json['id'])
             if match_obj is None:
                 if (session.get(Team, match_json['awayTeamId']) is None or
                         session.get(Team, match_json['homeTeamId']) is None):
-                    self.populate_teams(match_json['tournamentId'])
+                    self.populate_teams(session, match_json['tournamentId'])
                 if session.get(Season, match_json['tournamentId']) is None:
-                    self.populate_seasons(int(match_json['scheduledAt'][:4]), int(match_json['scheduledAt'][5:7]))
+                    self.populate_seasons(session, status, int(match_json['scheduledAt'][:4]),
+                                          int(match_json['scheduledAt'][5:7]))
                 match_obj = Match(
                     id=match_json['id'],
                     name=match_json['name'],
@@ -65,8 +74,8 @@ class DbPopulator:
         session.commit()
         return match_list_result
 
-    def populate_seasons(self, session, year, month):
-        season_list = ApiScrapper.get_seasons(year, month)
+    def populate_seasons(self, session, status, year, month):
+        season_list = ApiScrapper.get_seasons(status, year, month)
         for season_json in season_list:
             season_obj = session.get(Season, season_json['id'])
             if season_obj is None:
@@ -126,7 +135,7 @@ class DbPopulator:
 
 class MatchPopulateSchema(Schema):
     status = fields.Enum(MatchStatus, required=True, metadata={'description': '#### Status of matches'})
-    year = fields.Integer(required=False, validate=validate.Range(min=2020, max=2023),
+    year = fields.Integer(required=False, validate=validate.Range(min=2020),
                           metadata={'description': '#### Year of the matches'})
     month = fields.Integer(required=False, validate=validate.Range(min=1, max=12),
                            metadata={'description': '#### Month of the matches'})

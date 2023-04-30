@@ -1,8 +1,11 @@
 from flask import Flask
 from database import db
 from flask_smorest import Api
-from src.service.db_populator_service import blp as db_populator_blp
+
 from flask_swagger_ui import get_swaggerui_blueprint
+
+from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
+    result_blp, season_blp, team_blp
 
 
 def create_app():
@@ -22,6 +25,14 @@ def create_app():
 
     # Register blueprints
     api.register_blueprint(db_populator_blp)
+    api.register_blueprint(esport_blp)
+    api.register_blueprint(league_blp)
+    api.register_blueprint(match_blp)
+    api.register_blueprint(participation_blp)
+    api.register_blueprint(probability_blp)
+    api.register_blueprint(result_blp)
+    api.register_blueprint(season_blp)
+    api.register_blueprint(team_blp)
 
 
     #SWAGGER VIEW
