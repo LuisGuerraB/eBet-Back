@@ -1,5 +1,7 @@
+from marshmallow import Schema, fields
 from sqlalchemy import Index
 from database import db
+
 
 def obtain_percentage(json_frame, json_frame_opposite, type):
     if len(json_frame) == 0 or len(json_frame_opposite) == 0:
@@ -66,3 +68,22 @@ class Result(db.Model):
                 set=set
             ))
         return result
+
+
+class ResultSchema(Schema):
+    id = fields.Integer(metadata={'description': '#### Id of the Result'})
+    winner = fields.Boolean(metadata={'description': '#### Winner of the Result'})
+    gold_percent = fields.Integer(metadata={'description': '#### Percentage winning at gold of the Result'})
+    exp_percent = fields.Integer(metadata={'description': '#### Percentage winning at exp of the Result'})
+    elders = fields.Integer(metadata={'description': '#### Number of elders of the Result'})
+    towers = fields.Integer(metadata={'description': '#### Number of towers of the Result'})
+    drakes = fields.Integer(metadata={'description': '#### Number of drakes of the Result'})
+    inhibitors = fields.Integer(metadata={'description': '#### Number of inhibitors of the Result'})
+    barons = fields.Integer(metadata={'description': '#### Number of barons of the Result'})
+    heralds = fields.Integer(metadata={'description': '#### Number of heralds of the Result'})
+    kills = fields.Integer(metadata={'description': '#### Number of kills of the Result'})
+    deaths = fields.Integer(metadata={'description': '#### Number of deaths of the Result'})
+    assists = fields.Integer(metadata={'description': '#### Number of assists of the Result'})
+    team_id = fields.Integer(metadata={'description': '#### TeamId of the Result'})
+    match_id = fields.Integer(metadata={'description': '#### MatchId of the Result'})
+    set = fields.Integer(metadata={'description': '#### Set of the Result'})

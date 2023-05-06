@@ -1,3 +1,5 @@
+from marshmallow import Schema, fields
+
 from database import db
 
 
@@ -20,3 +22,12 @@ class Team(db.Model):
 
     def __repr__(self) -> str:
         return f'<Team #{self.id} ({self.acronym})>'
+
+
+class TeamSchema(Schema):
+    id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Team'})
+    name = fields.String(metadata={'description': '#### Name of the Team'})
+    acronym = fields.String(metadata={'description': '#### Acronym of the Team'})
+    img = fields.String(metadata={'description': '#### Image of the Team'})
+    website = fields.String(metadata={'description': '#### Website of the Team'})
+    nationality = fields.String(metadata={'description': '#### Nationality of the Team'})

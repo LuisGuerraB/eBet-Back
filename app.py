@@ -1,10 +1,11 @@
 from flask import Flask
 from database import db
 from flask_smorest import Api
-from src.enums import MatchStatus
-from src.classes import DbPopulator
 
-api = Api()
+from flask_swagger_ui import get_swaggerui_blueprint
+
+from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
+    result_blp, season_blp, team_blp
 
 
 def create_app():
@@ -19,36 +20,29 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
-    api.init_app(app)
+    api = Api(app)
+
 
     # Register blueprints
-    # api.register_blueprint()
-    populator = DbPopulator(db)
+    api.register_blueprint(db_populator_blp)
+    api.register_blueprint(esport_blp)
+    api.register_blueprint(league_blp)
+    api.register_blueprint(match_blp)
+    api.register_blueprint(participation_blp)
+    api.register_blueprint(probability_blp)
+    api.register_blueprint(result_blp)
+    api.register_blueprint(season_blp)
+    api.register_blueprint(team_blp)
 
-    @app.route('/seasons')
-    def seasons():
-        populator.populate_seasons(2023)
-        return "Seasons added to the database"
 
-    @app.route('/teams')
-    def teams():
-        populator.populate_teams(1045)
-        return "Teams added to the database"
-
-    @app.route('/matches')
-    def matches():
-        populator.populate_matches(MatchStatus.FINISHED, year=2023, limit=50, page=0)
-        return "Matches added to the database"
-
-    @app.route('/results')
-    def results():
-        populator.populate_result(21441,3)
-        return "Results added to the database"
-
-    @app.route('/populate')
-    def populate():
-        populator.populate_DB()
-        return "DB its complete with data of this year"
+    #SWAGGER VIEW
+    app.register_blueprint(get_swaggerui_blueprint(
+        '/swagger',
+        '/apidocs/openapi.json',
+        config={
+            'app_name': "Mi API Flask-Smorest"
+        }
+    ), url_prefix='/swagger')
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
