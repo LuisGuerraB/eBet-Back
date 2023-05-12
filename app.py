@@ -5,7 +5,7 @@ from flask_smorest import Api
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
-    result_blp, season_blp, team_blp
+    result_blp, season_blp, team_blp, bet_blp
 
 
 def create_app():
@@ -33,6 +33,7 @@ def create_app():
     api.register_blueprint(result_blp)
     api.register_blueprint(season_blp)
     api.register_blueprint(team_blp)
+    api.register_blueprint(bet_blp)
 
 
     #SWAGGER VIEW

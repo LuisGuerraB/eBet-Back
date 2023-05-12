@@ -7,6 +7,7 @@ from .probability_service import probability_blp
 from .result_service import result_blp
 from .season_service import season_blp
 from .team_service import team_blp
+from .bet_service import bet_blp
 
 __all__ = [
     'db_populator_blp',
@@ -17,5 +18,6 @@ __all__ = [
     'probability_blp',
     'result_blp',
     'season_blp',
-    'team_blp'
+    'team_blp',
+    'bet_blp'
 ]
