@@ -25,11 +25,11 @@ class Match(db.Model):
 
 class MatchSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Match'})
-    name = fields.String(metadata={'description': '#### Name of the Match'})
-    sets = fields.Integer(metadata={'description': '#### Number of sets of the Match'})
-    plan_date = fields.DateTime(metadata={'description': '#### Planned date of the Match'})
+    name = fields.String(required=True, metadata={'description': '#### Name of the Match'})
+    sets = fields.Integer(required=True, metadata={'description': '#### Number of sets of the Match'})
+    plan_date = fields.DateTime(required=True, metadata={'description': '#### Planned date of the Match'})
     ini_date = fields.DateTime(metadata={'description': '#### Iniciation date of the Match'})
     end_date = fields.DateTime(metadata={'description': '#### End date of the Match'})
-    away_team_id = fields.Integer(metadata={'description': '#### Away team of the Match'})
-    local_team_id = fields.Integer(metadata={'description': '#### Local team of the Match'})
-    season_id = fields.Integer(metadata={'description': '#### Season of the Match'})
+    away_team_id = fields.Integer(required=True, metadata={'description': '#### Away team of the Match'})
+    local_team_id = fields.Integer(required=True, metadata={'description': '#### Local team of the Match'})
+    season_id = fields.Integer(required=True, metadata={'description': '#### Season of the Match'})

@@ -2,6 +2,7 @@ from marshmallow import Schema, fields
 
 from database import db
 
+
 class Esport(db.Model):
     __tablename__ = 'esport'
 
@@ -11,7 +12,8 @@ class Esport(db.Model):
 
     leagues: db.Mapped[list['League']] = db.relationship('League', back_populates='esport')
 
+
 class EsportSchema(Schema):
-    id = fields.Integer(dump_only=True,metadata={'description':'#### Id of the Esport'})
-    name = fields.String(metadata={'description':'#### Name of the Esport'})
-    img = fields.String(metadata={'description':'#### Image of the Esport'})
+    id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Esport'})
+    name = fields.String(required=True, metadata={'description': '#### Name of the Esport'})
+    img = fields.String(required=True, metadata={'description': '#### Image of the Esport'})

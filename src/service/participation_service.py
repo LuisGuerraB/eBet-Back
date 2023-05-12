@@ -9,12 +9,11 @@ api_description = 'Methods over Participation'
 participation_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@participation_blp.route('/<int:participation_id>', methods=['GET'])
+@participation_blp.route(api_url+'/<int:participation_id>', methods=['GET'])
 @participation_blp.doc(tags=[api_name])
 @participation_blp.response(200, ParticipationSchema)
 def get_participation(participation_id):

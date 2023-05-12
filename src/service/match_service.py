@@ -9,12 +9,11 @@ api_description = 'Methods over match'
 match_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@match_blp.route('/<int:match_id>', methods=['GET'])
+@match_blp.route(api_url+'/<int:match_id>', methods=['GET'])
 @match_blp.doc(tags=[api_name])
 @match_blp.response(200, MatchSchema)
 def get_match(match_id):

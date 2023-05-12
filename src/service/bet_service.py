@@ -10,12 +10,11 @@ api_description = 'Database bet methods'
 bet_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@bet_blp.route('/', methods=['POST'])
+@bet_blp.route(api_url+'/', methods=['POST'])
 @bet_blp.doc(tags=[api_name])
 @bet_blp.arguments(BetSchema)
 @bet_blp.response(200, BetSchema)

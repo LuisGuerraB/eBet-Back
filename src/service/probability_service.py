@@ -9,12 +9,11 @@ api_description = 'Methods over Probability'
 probability_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@probability_blp.route('/<int:probability_id>', methods=['GET'])
+@probability_blp.route(api_url+'/<int:probability_id>', methods=['GET'])
 @probability_blp.doc(tags=[api_name])
 @probability_blp.response(200, ProbabilitySchema)
 def get_probability(probability_id):

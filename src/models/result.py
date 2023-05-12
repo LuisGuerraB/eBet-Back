@@ -71,8 +71,8 @@ class Result(db.Model):
 
 
 class ResultSchema(Schema):
-    id = fields.Integer(metadata={'description': '#### Id of the Result'})
-    winner = fields.Boolean(metadata={'description': '#### Winner of the Result'})
+    id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Result'})
+    winner = fields.Boolean(required=True, metadata={'description': '#### Winner of the Result'})
     gold_percent = fields.Integer(metadata={'description': '#### Percentage winning at gold of the Result'})
     exp_percent = fields.Integer(metadata={'description': '#### Percentage winning at exp of the Result'})
     elders = fields.Integer(metadata={'description': '#### Number of elders of the Result'})

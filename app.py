@@ -22,21 +22,21 @@ def create_app():
     db.init_app(app)
     api = Api(app)
 
+    url_prefix = '/' + app.config["API_TITLE"] + '/' + app.config["API_VERSION"]
 
     # Register blueprints
-    api.register_blueprint(db_populator_blp)
-    api.register_blueprint(esport_blp)
-    api.register_blueprint(league_blp)
-    api.register_blueprint(match_blp)
-    api.register_blueprint(participation_blp)
-    api.register_blueprint(probability_blp)
-    api.register_blueprint(result_blp)
-    api.register_blueprint(season_blp)
-    api.register_blueprint(team_blp)
-    api.register_blueprint(bet_blp)
+    api.register_blueprint(db_populator_blp, url_prefix=url_prefix)
+    api.register_blueprint(esport_blp, url_prefix=url_prefix)
+    api.register_blueprint(league_blp, url_prefix=url_prefix)
+    api.register_blueprint(match_blp, url_prefix=url_prefix)
+    api.register_blueprint(participation_blp, url_prefix=url_prefix)
+    api.register_blueprint(probability_blp, url_prefix=url_prefix)
+    api.register_blueprint(result_blp, url_prefix=url_prefix)
+    api.register_blueprint(season_blp, url_prefix=url_prefix)
+    api.register_blueprint(team_blp, url_prefix=url_prefix)
+    api.register_blueprint(bet_blp, url_prefix=url_prefix)
 
-
-    #SWAGGER VIEW
+    # SWAGGER VIEW
     app.register_blueprint(get_swaggerui_blueprint(
         '/swagger',
         '/apidocs/openapi.json',
