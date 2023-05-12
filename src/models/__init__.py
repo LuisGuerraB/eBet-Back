@@ -6,6 +6,8 @@ from .result import Result, ResultSchema
 from .season import Season, SeasonSchema
 from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema
+from .bet import Bet
+from .user import User
 
 __all__ = [
     'Esport',
@@ -23,5 +25,7 @@ __all__ = [
     'Team',
     'TeamSchema',
     'Probability',
-    'ProbabilitySchema'
+    'ProbabilitySchema',
+    'Bet',
+    'User'
 ]

@@ -20,6 +20,7 @@ class Match(db.Model):
     local_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[local_team_id])
     season: db.Mapped['Season'] = db.relationship('Season', back_populates='matches')
     results: db.Mapped[list['Result']] = db.relationship('Result', back_populates='match')
+    bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='match')
 
 
 class MatchSchema(Schema):
