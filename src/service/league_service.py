@@ -9,12 +9,11 @@ api_description = 'Methods over League'
 league_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@league_blp.route('/<int:league_id>', methods=['GET'])
+@league_blp.route(api_url+'/<int:league_id>', methods=['GET'])
 @league_blp.doc(tags=[api_name])
 @league_blp.response(200, LeagueSchema)
 def get_league(league_id):

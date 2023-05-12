@@ -10,12 +10,11 @@ api_description = 'Database populate methods'
 db_populator_blp = Blueprint(
     name=api_name,
     description=api_description,
-    url_prefix=api_url,
     import_name=__name__,
 )
 
 
-@db_populator_blp.route('/seasons/<int:year>/<int:month>', methods=['PUT'])
+@db_populator_blp.route(api_url+'/seasons/<int:year>/<int:month>', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
 def seasons(year, month):
@@ -23,7 +22,7 @@ def seasons(year, month):
     populator.populate_seasons(populator.db.session(), year, month)
 
 
-@db_populator_blp.route('/teams/<int:team_id>', methods=['PUT'])
+@db_populator_blp.route(api_url+'/teams/<int:team_id>', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
 def teams(team_id):
@@ -31,7 +30,7 @@ def teams(team_id):
     populator.populate_teams(populator.db.session(), team_id)
 
 
-@db_populator_blp.route('/matches', methods=['PUT'])
+@db_populator_blp.route(api_url+'/matches', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.arguments(MatchPopulateSchema, location='json')
 @db_populator_blp.response(204)
@@ -41,7 +40,7 @@ def matches(params):
                                params.get('limit'), params.get('page'))
 
 
-@db_populator_blp.route('/result/<int:match_id>/<int:set>', methods=['PUT'])
+@db_populator_blp.route(api_url+'/result/<int:match_id>/<int:set>', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
 def results(match_id, set):
@@ -49,7 +48,7 @@ def results(match_id, set):
     populator.populate_result(populator.db.session(), match_id, set)
 
 
-@db_populator_blp.route('/populate', methods=['PUT'])
+@db_populator_blp.route(api_url+'/populate', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
 def populate():

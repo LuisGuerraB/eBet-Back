@@ -138,7 +138,7 @@ class Probability(db.Model):
 
 
 class ProbabilitySchema(Schema):
-    id = fields.Integer(metadata={'description': '#### Id of the Probability'})
+    id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Probability'})
     prob_win = fields.Float(metadata={'description': '#### Probability of wining the game'})
     prob_gold = fields.Float(metadata={'description': '#### Probability of wining in gold'})
     prob_exp = fields.Float(metadata={'description': '#### Probability of wining in exp'})
