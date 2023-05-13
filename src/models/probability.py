@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 from sqlalchemy.orm import validates
 
 from database import db
@@ -138,18 +138,27 @@ class Probability(db.Model):
 
 
 class ProbabilitySchema(Schema):
-    id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Probability'})
-    prob_win = fields.Float(metadata={'description': '#### Probability of wining the game'})
-    prob_gold = fields.Float(metadata={'description': '#### Probability of wining in gold'})
-    prob_exp = fields.Float(metadata={'description': '#### Probability of wining in exp'})
-    prob_towers = fields.Integer(metadata={'description': '#### Probability of towers'})
-    prob_drakes = fields.Integer(metadata={'description': '#### Probability of drakes'})
-    prob_inhibitors = fields.Integer(metadata={'description': '#### Probability of inhibitors'})
-    prob_elders = fields.Integer(metadata={'description': '#### Probability of elders'})
-    prob_barons = fields.Integer(metadata={'description': '#### Probability of barons'})
-    prob_heralds = fields.Integer(metadata={'description': '#### Probability of heralds'})
-    prob_kills = fields.Integer(metadata={'description': '#### Probability of kills'})
-    prob_deaths = fields.Integer(metadata={'description': '#### Probability of deaths'})
-    prob_assists = fields.Integer(metadata={'description': '#### Probability of assists'})
+    id = fields.Integer(dump_only=True, metadata={'description': '#### ID of the probability'})
+    prob_win = fields.Float(required=True, metadata={'description': '#### Probability of wining the game'})
+    prob_gold = fields.Float(required=True, metadata={'description': '#### Probability of wining in gold'})
+    prob_exp = fields.Float(required=True, metadata={'description': '#### Probability of wining in exp'})
+    prob_towers = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                              metadata={'description': '#### Probability of towers'})
+    prob_drakes = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                              metadata={'description': '#### Probability of drakes'})
+    prob_inhibitors = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                                  metadata={'description': '#### Probability of inhibitors'})
+    prob_elders = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                              metadata={'description': '#### Probability of elders'})
+    prob_barons = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                              metadata={'description': '#### Probability of barons'})
+    prob_heralds = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                               metadata={'description': '#### Probability of heralds'})
+    prob_kills = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                             metadata={'description': '#### Probability of kills'})
+    prob_deaths = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                              metadata={'description': '#### Probability of deaths'})
+    prob_assists = fields.List(fields.Float(), validate=validate.Length(3), required=True,
+                               metadata={'description': '#### Probability of assists'})
     team_id = fields.Integer(metadata={'description': '#### TeamId of the Probability'})
     season_id = fields.Integer(metadata={'description': '#### SeasonId of the Probability'})
