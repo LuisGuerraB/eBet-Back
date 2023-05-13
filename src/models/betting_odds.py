@@ -21,7 +21,7 @@ class BettingOdds(db.Model):
     assists_odds = db.Column(db.ARRAY(db.Float(2), dimensions=1))
 
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    match_id = db.Column(db.Integer, db.ForeignKey('match.id'))
+    match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
 
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='probabilities')

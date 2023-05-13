@@ -51,7 +51,7 @@ def upgrade() -> None:
     sa.Column('deaths_odds', sa.ARRAY(sa.Float(precision=2), dimensions=1), nullable=True),
     sa.Column('assists_odds', sa.ARRAY(sa.Float(precision=2), dimensions=1), nullable=True),
     sa.Column('team_id', sa.Integer(), nullable=False),
-    sa.Column('match_id', sa.Integer(), nullable=True),
+    sa.Column('match_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['match_id'], ['match.id'], ),
     sa.ForeignKeyConstraint(['team_id'], ['team.id'], ),
     sa.PrimaryKeyConstraint('id')
