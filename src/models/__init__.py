@@ -5,7 +5,7 @@ from .participation import Participation, ParticipationSchema
 from .result import Result, ResultSchema
 from .season import Season, SeasonSchema
 from .team import Team, TeamSchema
-from .probability import Probability, ProbabilitySchema
+from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema
 from .betting_odds import BettingOdds
 from .user import User
@@ -27,6 +27,7 @@ __all__ = [
     'TeamSchema',
     'Probability',
     'ProbabilitySchema',
+    'ProbabilityCreateSchema',
     'Bet',
     'BetSchema',
     'BettingOdds',

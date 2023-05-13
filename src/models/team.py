@@ -12,6 +12,7 @@ class Team(db.Model):
     img = db.Column(db.String)
     website = db.Column(db.String)
     nationality = db.Column(db.String)
+    league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
 
     seasons: db.Mapped[list['Participation']] = db.relationship(back_populates='team')
     results: db.Mapped[list['Result']] = db.relationship(back_populates='team')

@@ -2,6 +2,7 @@ from flask_smorest import Blueprint
 from app import db
 
 from src.classes import DbPopulator, MatchPopulateSchema
+from src.models import ProbabilityCreateSchema
 
 api_url = '/populator'
 api_name = 'Populator'
@@ -22,12 +23,13 @@ def seasons(year, month):
     populator.populate_seasons(populator.db.session(), year, month)
 
 
-@db_populator_blp.route(api_url+'/teams/<int:team_id>', methods=['PUT'])
+@db_populator_blp.route(api_url+'/teams/<int:league_id>', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
-def teams(team_id):
+def teams(league_id):
     populator = DbPopulator(db)
-    populator.populate_teams(populator.db.session(), team_id)
+    for i in range(80,105):
+        populator.populate_teams(populator.db.session(), i)
 
 
 @db_populator_blp.route(api_url+'/matches', methods=['PUT'])
@@ -55,3 +57,12 @@ def populate():
     """Populate whole database"""
     populator = DbPopulator(db)
     populator.populate_DB()
+
+@db_populator_blp.route(api_url + '/probability', methods=['PUT'])
+@db_populator_blp.doc(tags=[api_name])
+@db_populator_blp.arguments(ProbabilityCreateSchema, location='json')
+@db_populator_blp.response(204)
+def populate(params):
+     """Populate whole database"""
+     populator = DbPopulator(db)
+     populator.populate_probabilites(params.get('team_id'), params.get('league_id', None))

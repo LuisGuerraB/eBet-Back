@@ -1,10 +1,11 @@
 from marshmallow.schema import Schema
 from marshmallow import fields, validate
+from sqlalchemy import desc
 
 from src.enums import MatchStatus
 from src.classes.prob_calculator import ProbCalculator
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Season, League, Result, Team, Probability
+from src.models import Match, Season, League, Result, Team, Participation
 import datetime
 
 
@@ -43,6 +44,10 @@ class DbPopulator:
             teams = session.query(Team).all()
             for team in teams:
                 self.prob.create_probabilities_from_team_at_season(session, team.id)
+
+    def populate_probabilites(self, team_id, league_id=None):
+        with self.db.session() as session:
+            self.prob.create_probabilities_from_team_at_season(session, team_id, league_id)
 
     def populate_matches(self, session, status, year=None, month=None, leagueId=None, limit=5, page=0):
         match_list = ApiScrapper.get_list_match(status, year, month, leagueId, limit, page)
@@ -116,20 +121,36 @@ class DbPopulator:
                 session.add(result_obj_2)
                 session.commit()
 
-    def populate_teams(self, session, season_id):
-        team_list = ApiScrapper.get_teams(season_id)
-        for team in team_list:
-            team_json = team['team']
-            if session.get(Team, team_json['id']) is None:
-                team_obj = Team(
-                    id=int(team_json['id']),
-                    name=team_json['name'],
-                    acronym=team_json['acronym'],
-                    img=team_json['imageUrl'],
-                    website=team_json['website'],
-                    nationality=team_json['nationality'],
-                )
-                session.add(team_obj)
+    def populate_teams(self, session, league_id):
+        season = session.query(Season).filter(
+            Season.league_id == league_id,
+            Season.name.like('%Regular%')
+        ).order_by(desc(Season.ini_date)).first()
+        if season is not None:
+            team_list = ApiScrapper.get_teams(season.id)
+            for team in team_list:
+                team_json = team['team']
+                team_obj = session.get(Team, team_json['id'])
+                if team_obj is None:
+                    team_obj = Team(
+                        id=int(team_json['id']),
+                        name=team_json['name'],
+                        acronym=team_json['acronym'],
+                        img=team_json['imageUrl'],
+                        website=team_json['website'],
+                        nationality=team_json['nationality'],
+                        league_id=league_id
+                    )
+                    session.add(team_obj)
+                self.populate_participations(session, team_obj, team['position'], season.id)
+        session.commit()
+
+    def populate_participations(self, session, team, position, season_id):
+        participation = session.query(Participation).filter_by(team_id=team.id, season_id=season_id).first()
+        if participation is None:
+            participation = Participation(team_id=team.id, season_id=season_id, position=position)
+            session.add(participation)
+        participation.position = position
         session.commit()
 
 

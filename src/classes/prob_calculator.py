@@ -1,5 +1,5 @@
 from src.models import Result, Match, Probability
-from sqlalchemy import or_
+from sqlalchemy import or_, desc
 
 
 class ProbCalculator:
@@ -8,23 +8,30 @@ class ProbCalculator:
         self.db = db
 
 
-    def create_probabilities_from_team_at_season(self, session, team_id, season_id=None):
-        results = (
-            session.query(Result)
-            .join(Match)
-            .filter(Result.team_id == team_id, or_(Match.season_id == season_id, season_id is None))
-            .order_by(Match.ini_date)
-            .all()
-        )
+    def create_probabilities_from_team_at_season(self, session, team_id, league_id=None):
+        # Obtener los partidos del equipo en la liga
+        if league_id:
+            matches = session.query(Match).filter(
+                Match.season.has(league_id=league_id),
+                or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).all()
+        else:
+            matches = session.query(Match).filter(
+                or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).all()
+
+        # Obtener los resultados de los partidos y ordenarlos por la fecha de inicio
+        results = session.query(Result).filter(
+            Result.match_id.in_([match.id for match in matches]),
+            Result.team_id == team_id
+        ).join(Result.match).order_by(desc(Match.ini_date)).all()
+
         if results:
-            probability = session.query(Probability).filter_by(team_id=team_id, season_id=season_id).first()
+            probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
+
             if probability is None:
-                print('crea uno nuevo')
                 probability = Probability()
-                probability.update_data(results, team_id, season_id)
+                probability.update_data(results, team_id, league_id)
                 session.add(probability)
             else:
-                print('actualiza uno existente')
-                probability.update_data(results, team_id, season_id)
+                probability.update_data(results, team_id, league_id)
             session.commit()
 
