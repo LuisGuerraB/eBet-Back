@@ -1,6 +1,8 @@
 from marshmallow import Schema, fields
 
 from database import db
+from .team import TeamSchema
+from .season import SeasonSchema
 
 
 class Match(db.Model):
@@ -22,7 +24,6 @@ class Match(db.Model):
     results: db.Mapped[list['Result']] = db.relationship('Result', back_populates='match')
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='match')
 
-
 class MatchSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Match'})
     name = fields.String(required=True, metadata={'description': '#### Name of the Match'})
@@ -30,6 +31,6 @@ class MatchSchema(Schema):
     plan_date = fields.DateTime(required=True, metadata={'description': '#### Planned date of the Match'})
     ini_date = fields.DateTime(metadata={'description': '#### Iniciation date of the Match'})
     end_date = fields.DateTime(metadata={'description': '#### End date of the Match'})
-    away_team_id = fields.Integer(required=True, metadata={'description': '#### Away team of the Match'})
-    local_team_id = fields.Integer(required=True, metadata={'description': '#### Local team of the Match'})
-    season_id = fields.Integer(required=True, metadata={'description': '#### Season of the Match'})
+    away_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Away team of the Match'})
+    local_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Local team of the Match'})
+    season = fields.Nested(SeasonSchema, required=True, metadata={'description': '#### Season of the Match'})

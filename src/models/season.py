@@ -1,6 +1,7 @@
 from marshmallow import Schema, fields
 
 from database import db
+from .league import LeagueSchema
 
 
 class Season(db.Model):
@@ -24,4 +25,4 @@ class SeasonSchema(Schema):
     serie_id = fields.Integer(required=True, metadata={'description': '#### SerieId of the Season'})
     ini_date = fields.Date(required=True, metadata={'description': '#### Ini date of the Season'})
     end_date = fields.Date(metadata={'description': '#### End date of the Season'})
-    league_id = fields.Integer(required=True, metadata={'description': '#### LeagueId of the Season'})
+    league = fields.Nested(LeagueSchema,required=True, metadata={'description': '#### League of the Season'})

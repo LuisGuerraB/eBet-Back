@@ -1,15 +1,17 @@
 from flask import Flask
 from database import db
 from flask_smorest import Api
+from flask_cors import CORS
 
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
-    result_blp, season_blp, team_blp, bet_blp
+    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp
 
 
 def create_app():
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "http://localhost:4200"}})
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://root:1234@localhost/eBet"
     app.config["API_TITLE"] = "api"
     app.config["API_VERSION"] = "v1"
@@ -35,6 +37,7 @@ def create_app():
     api.register_blueprint(season_blp, url_prefix=url_prefix)
     api.register_blueprint(team_blp, url_prefix=url_prefix)
     api.register_blueprint(bet_blp, url_prefix=url_prefix)
+    api.register_blueprint(betting_odds_blp, url_prefix=url_prefix)
 
     # SWAGGER VIEW
     app.register_blueprint(get_swaggerui_blueprint(
