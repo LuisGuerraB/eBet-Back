@@ -1,3 +1,4 @@
+from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 from app import db
 
@@ -14,14 +15,17 @@ bet_blp = Blueprint(
 )
 
 
-@bet_blp.route(api_url+'/', methods=['POST'])
+@bet_blp.route(api_url + '/', methods=['POST'])
 @bet_blp.doc(tags=[api_name])
+@login_required
 @bet_blp.arguments(BetSchema)
 @bet_blp.response(200, BetSchema)
 def create_bet(params):
     with db.session() as session:
-        # TODO Find out if the user has enough balance to make the bet
-        if Bet.exist(params['match_id'], params['user_id'], params['type'], params['subtype']):
+        user = current_user
+        if user.balance < params['amount']:
+            abort(400, message='Insufficient funds')
+        if Bet.exist(params['match_id'], user.id, params['type'], params['subtype']):
             abort(400, message='You already have a bet on this match. Try updating the already existing bet')
         try:
             bet = Bet(**params)

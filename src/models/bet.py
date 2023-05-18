@@ -33,4 +33,3 @@ class BetSchema(Schema):
     multiplier = fields.Integer(required=True, metadata={'description': '#### Multiplier of the Bet'})
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
     match_id = fields.Integer(required=True, metadata={'description': '#### MatchId of the Bet'})
-    user_id = fields.Integer(required=True, metadata={'description': '#### UserId of the Bet'})
