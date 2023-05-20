@@ -9,6 +9,7 @@ from .season_service import season_blp
 from .team_service import team_blp
 from .bet_service import bet_blp
 from .betting_odds_service import betting_odds_blp
+from .user_service import user_blp
 
 __all__ = [
     'db_populator_blp',
@@ -21,5 +22,6 @@ __all__ = [
     'season_blp',
     'team_blp',
     'bet_blp',
-    'betting_odds_blp'
+    'betting_odds_blp',
+    'user_blp'
 ]
