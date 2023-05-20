@@ -28,9 +28,18 @@ def create_bet(params):
         if Bet.exist(params['match_id'], user.id, params['type'], params['subtype']):
             abort(400, message='You already have a bet on this match. Try updating the already existing bet')
         try:
-            bet = Bet(**params)
+            bet = Bet(
+                date=params['date'],
+                type=params['type'],
+                subtype=params['subtype'],
+                multiplier=params['multiplier'],
+                amount=params['amount'],
+                match_id=params['match_id'],
+                user_id=user.id
+            )
             session.add(bet)
             session.commit()
-            return BetSchema().dump(bet)
+            bet = Bet.query.get(bet.id)
+            return bet
         except:
             abort(400, message='Invalid bet parameters')

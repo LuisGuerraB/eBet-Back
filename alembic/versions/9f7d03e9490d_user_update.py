@@ -22,6 +22,7 @@ def upgrade() -> None:
     op.add_column('user', sa.Column('email', sa.String(), nullable=False))
     op.add_column('user', sa.Column('password', sa.String(), nullable=False))
     op.add_column('user', sa.Column('balance', sa.Integer(), nullable=True))
+    op.add_column('user', sa.Column('img', sa.String(), nullable=True))
     op.create_unique_constraint(None, 'user', ['username'])
     # ### end Alembic commands ###
 
@@ -33,4 +34,5 @@ def downgrade() -> None:
     op.drop_column('user', 'password')
     op.drop_column('user', 'email')
     op.drop_column('user', 'username')
+    op.drop_column('user', 'img')
     # ### end Alembic commands ###

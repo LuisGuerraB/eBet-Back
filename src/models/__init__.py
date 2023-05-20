@@ -8,7 +8,7 @@ from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema
 from .betting_odds import BettingOdds, BettingOddsByMatchSchema, BettingOddSchema
-from .user import User, UserSchema
+from .user import User, UserSchema, UserLoginSchema
 
 __all__ = [
     'Esport',
@@ -34,5 +34,6 @@ __all__ = [
     'BettingOddSchema',
     'BettingOddsByMatchSchema',
     'User',
-    'UserSchema'
+    'UserSchema',
+    'UserLoginSchema'
 ]

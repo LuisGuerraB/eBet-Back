@@ -8,7 +8,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 from src.models import User
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
-    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp,user_blp
+    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp, user_blp
 
 
 def create_app():
@@ -19,7 +19,7 @@ def create_app():
     def load_user(user_id: int):
         return User.query.get(user_id)
 
-    CORS(app, origins= "http://localhost:4200",methods=["GET", "POST"])
+    CORS(app, origins="http://localhost:4200", methods=["GET", "POST"], supports_credentials=True)
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://root:1234@localhost/eBet"
     app.config["API_TITLE"] = "api"
     app.config["API_VERSION"] = "v1"
@@ -28,6 +28,7 @@ def create_app():
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "swagger"
     app.config["OPENAPI_SWAGGER_UI_VERSION"] = "3.22.2"
     app.config["SECRET_KEY"] = "clave_secreta_segura"
+    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # Expiración de 1 día en segundos
 
     # Initialize extensions
     db.init_app(app)

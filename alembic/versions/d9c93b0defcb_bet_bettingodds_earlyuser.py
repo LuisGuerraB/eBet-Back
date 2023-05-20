@@ -1,4 +1,4 @@
-"""Bet EarlyUser
+"""Bet BettingOdds
 
 Revision ID: d9c93b0defcb
 Revises: 0abf14c64137
@@ -23,7 +23,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('bet',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(),autoincrement=True, nullable=False),
     sa.Column('date', sa.DateTime(), nullable=False),
     sa.Column('type', sa.Enum('WINNER', 'EXP', 'GOLD', 'DRAKES', 'INHIBITORS', 'ELDER', 'TOWER', 'BARON', 'HERALD', 'KILL', 'DEATH', 'ASSIST', name='bettype'), nullable=False),
     sa.Column('subtype', sa.Integer(), nullable=True),

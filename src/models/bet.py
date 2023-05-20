@@ -7,7 +7,7 @@ from src.enums import BetType
 class Bet(db.Model):
     __tablename__ = 'bet'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     date = db.Column(db.DateTime, nullable=False)
     type = db.Column(db.Enum(BetType), nullable=False)
     subtype = db.Column(db.Integer)
