@@ -37,13 +37,12 @@ def register_user(params):
         if check_password_hash(user.email, params['email']):
             abort(409, message='control-error.email-registered')
 
-    hashed_password = generate_password_hash(params['password'])
-    hashed_email = generate_password_hash(params['email'])
-    user = User(username=params['username'], password=hashed_password, email=hashed_email)
-    with db.session() as session:
-        session.add(user)
-        session.commit()
-    return 201
+    try:
+        User.register_user(params['username'], params['password'], params['email'])
+        return 201
+    except:
+        abort(409, message='control-error.unexpected')
+
 
 
 @user_blp.route(api_url + '/login', methods=['POST'])
@@ -51,9 +50,6 @@ def register_user(params):
 @user_blp.arguments(UserLoginSchema)
 @user_blp.response(200, UserSchema)
 def login(params):
-    if current_user.is_authenticated:
-        abort(401, message='control-error.already-logged-in')
-
     user = User.query.filter_by(username=params['username']).first()
     if user and check_password_hash(user.password, params['password']):
         login_user(user)
