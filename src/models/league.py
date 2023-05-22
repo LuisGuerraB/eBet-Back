@@ -23,3 +23,9 @@ class LeagueSchema(Schema):
     img = fields.String(required=True, metadata={'description': '#### Image of the League'})
     esport_id = fields.Integer(required=True,
                                metadata={'description': '#### Id of the Esport associated to the League'})
+
+
+class LeagueListSchema(Schema):
+    items = fields.List(fields.Nested(LeagueSchema), dump_only=True, required=True,
+                        metadata={'description': '#### List of Leagues'})
+    total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of leagues'})

@@ -1,6 +1,6 @@
 from .esport import Esport, EsportSchema
-from .league import League, LeagueSchema
-from .match import Match, MatchSchema
+from .league import League, LeagueSchema, LeagueListSchema
+from .match import Match, MatchSchema,MatchListArgumentSchema, MatchListSchema
 from .participation import Participation, ParticipationSchema
 from .result import Result, ResultSchema
 from .season import Season, SeasonSchema
@@ -15,8 +15,11 @@ __all__ = [
     'EsportSchema',
     'League',
     'LeagueSchema',
+    'LeagueListSchema',
     'Match',
     'MatchSchema',
+    'MatchListArgumentSchema',
+    'MatchListSchema',
     'Participation',
     'ParticipationSchema',
     'Result',

@@ -1,8 +1,11 @@
-from marshmallow import Schema, fields
+from datetime import datetime
+from operator import or_
+
+from marshmallow import Schema, fields, validate
 
 from database import db
 from .team import TeamSchema
-from .season import SeasonSchema
+from .season import SeasonSchema, Season
 
 
 class Match(db.Model):
@@ -24,6 +27,26 @@ class Match(db.Model):
     results: db.Mapped[list['Result']] = db.relationship('Result', back_populates='match')
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='match')
 
+    @classmethod
+    def get_list(cls, league_id=None, finished=None, year=None, month=None, page=1, limit=10):
+        query = cls.query.order_by(Match.plan_date.desc())
+        if league_id:
+            query = query.join(Season).filter(Season.league_id == league_id)
+        if year:
+            query = query.filter(db.extract('year', cls.plan_date) == year)
+        if month:
+            query = query.filter(db.extract('month', cls.plan_date) == month)
+        if finished is not None:
+            now = datetime.now()
+            if finished:
+                query = query.filter(or_(cls.end_date <= now, cls.end_date.isnot(None)))
+            else:
+                query = query.filter(or_(cls.end_date > now, cls.end_date is None))
+
+        matches = query.paginate(page=page, per_page=limit)
+        return matches.items
+
+
 class MatchSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Match'})
     name = fields.String(required=True, metadata={'description': '#### Name of the Match'})
@@ -34,3 +57,19 @@ class MatchSchema(Schema):
     away_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Away team of the Match'})
     local_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Local team of the Match'})
     season = fields.Nested(SeasonSchema, required=True, metadata={'description': '#### Season of the Match'})
+
+
+class MatchListArgumentSchema(Schema):
+    league_id = fields.Integer(validate=validate.Range(min=1),
+                               metadata={'description': '#### Id of the League to match'})
+    finished = fields.Boolean(metadata={'description': '#### If the match is finished'})
+    year = fields.Integer(validate=validate.Range(min=2022), metadata={'description': '#### Year of the Match'})
+    month = fields.Integer(validate=validate.Range(min=1, max=12), metadata={'description': '#### Month of the Match'})
+    limit = fields.Integer(validate=validate.Range(min=1), metadata={'description': '#### Limit of the Match'})
+    page = fields.Integer(validate=validate.Range(min=1), metadata={'description': '#### Page of the Match'})
+
+
+class MatchListSchema(Schema):
+    items = fields.List(fields.Nested(MatchSchema), dump_only=True, required=True,
+                        metadata={'description': '#### List of Matches'})
+    total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of matches'})
