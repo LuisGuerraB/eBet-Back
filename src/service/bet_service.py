@@ -3,6 +3,8 @@ from flask_smorest import Blueprint, abort
 from app import db
 
 from src.models import Bet, BetSchema
+from src.models.bet import InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, \
+    ExistingBetException
 
 api_url = '/bet'
 api_name = 'Bet'
@@ -21,25 +23,12 @@ bet_blp = Blueprint(
 @bet_blp.arguments(BetSchema)
 @bet_blp.response(200, BetSchema)
 def create_bet(params):
-    with db.session() as session:
-        user = current_user
-        if user.balance < params['amount']:
-            abort(400, message='Insufficient funds')
-        if Bet.exist(params['match_id'], user.id, params['type'], params['subtype']):
-            abort(400, message='You already have a bet on this match. Try updating the already existing bet')
-        try:
-            bet = Bet(
-                date=params['date'],
-                type=params['type'],
-                subtype=params['subtype'],
-                multiplier=params['multiplier'],
-                amount=params['amount'],
-                match_id=params['match_id'],
-                user_id=user.id
-            )
-            session.add(bet)
-            session.commit()
-            bet = Bet.query.get(bet.id)
-            return bet
-        except:
-            abort(400, message='Invalid bet parameters')
+    user = current_user
+    try:
+        bet = Bet.create(user, **params)
+        return bet
+    except (InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, ExistingBetException) as e:
+        abort(409, message=e.message)
+    except Exception as e:
+        abort(400, message=str(e))
+
