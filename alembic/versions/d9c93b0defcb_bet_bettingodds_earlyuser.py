@@ -25,13 +25,15 @@ def upgrade() -> None:
     op.create_table('bet',
     sa.Column('id', sa.Integer(),autoincrement=True, nullable=False),
     sa.Column('date', sa.DateTime(), nullable=False),
-    sa.Column('type', sa.Enum('WINNER', 'EXP', 'GOLD', 'DRAKES', 'INHIBITORS', 'ELDER', 'TOWER', 'BARON', 'HERALD', 'KILL', 'DEATH', 'ASSIST', name='bettype'), nullable=False),
+    sa.Column('type', sa.Enum('WIN', 'EXP', 'GOLD', 'DRAKES', 'INHIBITORS', 'ELDERS', 'TOWERS', 'BARONS', 'HERALDS', 'KILLS', 'DEATHS', 'ASSISTS', name='bettype'), nullable=False),
     sa.Column('subtype', sa.Integer(), nullable=True),
-    sa.Column('multiplier', sa.Integer(), nullable=False),
+    sa.Column('multiplier', sa.Float(precision=2), nullable=False),
     sa.Column('amount', sa.Integer(), nullable=False),
     sa.Column('match_id', sa.Integer(), nullable=False),
+    sa.Column('team_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['match_id'], ['match.id'], ),
+    sa.ForeignKeyConstraint(['team_id'], ['team.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
