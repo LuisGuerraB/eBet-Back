@@ -12,8 +12,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(), unique=True, nullable=False)
     email = db.Column(db.String(), nullable=False)
     password = db.Column(db.String(), nullable=False)
-    balance = db.Column(db.Integer, default=100)
-    img = db.Column(db.String(), nullable=True)
+    balance = db.Column(db.Integer, default=100, nullable=False)
+    img = db.Column(db.String(), default='assets/img/user.svg', nullable=False)
 
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='user')
 

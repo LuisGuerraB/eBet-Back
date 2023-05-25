@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from flask import make_response
-from flask_login import current_user, login_user
+from flask_login import current_user, login_user, login_required, logout_user
 from flask_smorest import Blueprint, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from email_validator import validate_email, EmailNotValidError
@@ -55,3 +55,12 @@ def login(params):
         login_user(user)
         return user
     abort(401, message='control-error.invalid-credentials')
+
+@user_blp.route('/logout', methods=['POST'])
+@user_blp.doc(tags=[api_name])
+@login_required
+@user_blp.response(201)
+def logout():
+    # Cerrar sesión del usuario actual
+    logout_user()
+    return 201

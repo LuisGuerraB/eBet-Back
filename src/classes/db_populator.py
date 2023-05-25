@@ -75,6 +75,8 @@ class DbPopulator:
                     end_date=match_json['endAt']
                 )
                 session.add(match_obj)
+            match_obj.ini_date = match_json['beginAt']
+            match_obj.end_date = match_json['endAt']
             match_list_result.append(match_obj)
         session.commit()
         return match_list_result
