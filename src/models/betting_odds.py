@@ -48,7 +48,7 @@ class BettingOdds(db.Model):
         odds_attributes = ['win', 'gold', 'exp']
         json_attributes = ['towers', 'drakes', 'inhibitors', 'elders', 'barons', 'heralds', 'kills', 'deaths',
                            'assists']
-        number_off_probs = 2
+        number_off_probs = min(len(team_probs), len(opposing_team_probs))
         percentage = 1 / number_off_probs
 
         for i in range(number_off_probs):
@@ -64,13 +64,11 @@ class BettingOdds(db.Model):
 
             for attr in json_attributes:
                 dicRes = {}
-                count = 1
 
                 for number, prob in getattr(team_probs[i], f'prob_{attr}').items():
-                    if (count > len(team_probs[i].__dict__[f'prob_{attr}'])
-                            or count > len(opposing_team_probs[i].__dict__[f'prob_{attr}'])):
-                        break
-                    count += 1
+                    if (opposing_team_probs[i].__dict__[f'prob_{attr}'].get(number, None) is None
+                            or team_probs[i].__dict__[f'prob_{attr}'].get(number, None) is None):
+                        continue
                     if i == 0:
                         odd = self.calc_odds_not_related(prob, getattr(opposing_team_probs[i], f'prob_{attr}')[number],
                                                          percentage)
@@ -79,9 +77,6 @@ class BettingOdds(db.Model):
                         odd = self.calc_odds_not_related(prob, getattr(opposing_team_probs[i], f'prob_{attr}')[number],
                                                          percentage)
                         getattr(self, f'{attr}_odds')[number] += odd
-
-                    if i == number_off_probs - 1 and getattr(self, f'{attr}_odds')[number] < 1:
-                        getattr(self, f'{attr}_odds').pop(number)
 
                 if i == 0:
                     setattr(self, f'{attr}_odds', dicRes)
