@@ -12,18 +12,16 @@ class ProbCalculator:
         # Obtener los partidos del equipo en la liga
         if league_id:
             matches = session.query(Match).filter(
-                Match.season.has(league_id=league_id),
+                Match.season.has(league_id=league_id), Match.end_date.isnot(None),
                 or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).all()
         else:
-            matches = session.query(Match).filter(
+            matches = session.query(Match).filter(Match.end_date.isnot(None),
                 or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).all()
-
         # Obtener los resultados de los partidos y ordenarlos por la fecha de inicio
         results = session.query(Result).filter(
             Result.match_id.in_([match.id for match in matches]),
             Result.team_id == team_id
         ).join(Result.match).order_by(desc(Match.ini_date)).all()
-
         if results:
             probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
 

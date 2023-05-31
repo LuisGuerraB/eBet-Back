@@ -57,12 +57,12 @@ class DbPopulator:
                 continue
             match_obj = session.get(Match, match_json['id'])
             if match_obj is None:
-                if (session.get(Team, match_json['awayTeamId']) is None or
-                        session.get(Team, match_json['homeTeamId']) is None):
-                    self.populate_teams(session, match_json['tournamentId'])
                 if session.get(Season, match_json['tournamentId']) is None:
                     self.populate_seasons(session, status, int(match_json['scheduledAt'][:4]),
                                           int(match_json['scheduledAt'][5:7]))
+                if (session.get(Team, match_json['awayTeamId']) is None or
+                        session.get(Team, match_json['homeTeamId']) is None):
+                    self.populate_teams(session, match_json['tournament']['serie']['league']['id'])
                 match_obj = Match(
                     id=match_json['id'],
                     name=match_json['name'],

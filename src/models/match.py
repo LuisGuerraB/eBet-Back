@@ -29,7 +29,7 @@ class Match(db.Model):
 
     @classmethod
     def get_list(cls, league_id=None, finished=None, year=None, month=None, page=1, limit=10):
-        query = cls.query.order_by(Match.plan_date.desc())
+        query = cls.query.order_by(Match.plan_date.asc())
         if league_id:
             query = query.join(Season).filter(Season.league_id == league_id)
         if year:
@@ -41,7 +41,7 @@ class Match(db.Model):
             if finished:
                 query = query.filter(or_(cls.end_date <= now, cls.end_date.isnot(None)))
             else:
-                query = query.filter(or_(cls.end_date > now, cls.end_date is None))
+                query = query.filter(or_(cls.end_date > now, cls.end_date.is_(None)))
 
         matches = query.paginate(page=page, per_page=limit)
         return matches.items
