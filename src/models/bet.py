@@ -1,3 +1,5 @@
+from datetime import date
+
 from marshmallow import Schema, fields
 
 from database import db
@@ -60,7 +62,7 @@ class Bet(db.Model):
                 raise MultiplierNoMatchException()
             user.balance -= params['amount']
             bet = Bet(
-                date=params['date'],
+                date=date.today(),
                 type=params['type'],
                 subtype=params.get('subtype', None),
                 multiplier=attr,
@@ -76,7 +78,7 @@ class Bet(db.Model):
 
 class BetSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Bet'})
-    date = fields.DateTime(required=True, metadata={'description': '#### Date of the Bet'})
+    date = fields.DateTime(dump_only=True, metadata={'description': '#### Date of the Bet'})
     type = fields.Enum(BetType, required=True, metadata={'description': '#### Type of the Bet'})
     subtype = fields.Integer(metadata={'description': '#### Subtype of the Bet'})
     multiplier = fields.Float(format='0.00', required=True, metadata={'description': '#### Multiplier of the Bet'})

@@ -56,7 +56,7 @@ class ApiScrapper:
         {
             'operationName': "TournamentStandings",
             'query': "fragment CoreTeam on Team {\n  id\n  name\n  acronym\n  imageUrl\n  nationality\n  foundedAt\n  imageUrlDarkMode\n  imageUrlLightMode\n  youtube\n  twitter\n  facebook\n  instagram\n  discord\n  website\n}\n\n" +
-                     "fragment CoreRank on Rank {\n  team {\n    ...CoreTeam\n    } \n position \n previously \n}\n\n" +
+                     "fragment CoreRank on Rank {\n  team {\n    ...CoreTeam\n    } \n position \n point \n}\n\n" +
                      "query TournamentStandings($tournamentId: ID!) {\n  standings(tournamentId: $tournamentId) {\n    ...CoreRank\n    }\n}",
             'variables':
                 {

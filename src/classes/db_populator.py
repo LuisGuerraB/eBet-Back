@@ -124,35 +124,34 @@ class DbPopulator:
                 session.commit()
 
     def populate_teams(self, session, league_id):
-        season = session.query(Season).filter(
-            Season.league_id == league_id,
-            Season.name.like('%Regular%')
-        ).order_by(desc(Season.ini_date)).first()
+        season = Season.get_regular_season(league_id)
         if season is not None:
             team_list = ApiScrapper.get_teams(season.id)
             for team in team_list:
                 team_json = team['team']
                 team_obj = session.get(Team, team_json['id'])
+                img = team_json['imageUrlDarkMode'] if 'imageUrlDarkMode' in team_json else team_json['imageUrl']
                 if team_obj is None:
                     team_obj = Team(
                         id=int(team_json['id']),
                         name=team_json['name'],
                         acronym=team_json['acronym'],
-                        img=team_json['imageUrl'],
+                        img=img,
                         website=team_json['website'],
                         nationality=team_json['nationality'],
                         league_id=league_id
                     )
                     session.add(team_obj)
-                self.populate_participations(session, team_obj, team['position'], season.id)
+                self.populate_participations(session, team_obj, team['position'], team['point'], season.id)
         session.commit()
 
-    def populate_participations(self, session, team, position, season_id):
+    def populate_participations(self, session, team, position, points, season_id):
         participation = session.query(Participation).filter_by(team_id=team.id, season_id=season_id).first()
         if participation is None:
-            participation = Participation(team_id=team.id, season_id=season_id, position=position)
+            participation = Participation(team_id=team.id, season_id=season_id, position=position, points=points)
             session.add(participation)
         participation.position = position
+        participation.points = points
         session.commit()
 
 

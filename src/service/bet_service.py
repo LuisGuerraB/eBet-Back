@@ -1,6 +1,5 @@
 from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
-from app import db
 
 from src.models import Bet, BetSchema
 from src.models.bet import InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, \
