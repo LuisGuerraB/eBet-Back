@@ -23,6 +23,7 @@ def upgrade() -> None:
     op.add_column('user', sa.Column('password', sa.String(), nullable=False))
     op.add_column('user', sa.Column('balance', sa.Integer(), nullable=False))
     op.add_column('user', sa.Column('img', sa.String(), nullable=False))
+    op.add_column('user', sa.Column('last_login', sa.DateTime(), server_default='2023-04-8 00:00:00', nullable=False))
     op.create_unique_constraint(None, 'user', ['username'])
     # ### end Alembic commands ###
 

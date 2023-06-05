@@ -1,6 +1,6 @@
 from .esport import Esport, EsportSchema
 from .league import League, LeagueSchema, LeagueListSchema
-from .match import Match, MatchSchema,MatchListArgumentSchema, MatchListSchema
+from .match import Match, MatchSchema, MatchListArgumentSchema, MatchListSchema
 from .participation import Participation, ParticipationSchema, ParticipationListSchema
 from .result import Result, ResultSchema
 from .season import Season, SeasonSchema
@@ -8,7 +8,7 @@ from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema
 from .betting_odds import BettingOdds, BettingOddsByMatchSchema, BettingOddSchema
-from .user import User, UserSchema, UserLoginSchema
+from .user import User, UserSchema, UserLoginSchema, UserLoginResponseSchema
 
 __all__ = [
     'Esport',
@@ -39,5 +39,6 @@ __all__ = [
     'BettingOddsByMatchSchema',
     'User',
     'UserSchema',
-    'UserLoginSchema'
+    'UserLoginSchema',
+    'UserLoginResponseSchema',
 ]

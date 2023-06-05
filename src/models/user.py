@@ -1,8 +1,14 @@
+from datetime import datetime
+
 from marshmallow import Schema, fields, validate
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import db
-from flask_login import UserMixin
+from flask_login import UserMixin, login_user
+
+
+class InvalidCredentialException(Exception):
+    message = "control-error.invalid-credentials"
 
 
 class User(db.Model, UserMixin):
@@ -14,6 +20,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(), nullable=False)
     balance = db.Column(db.Integer, default=100, nullable=False)
     img = db.Column(db.String(), default='assets/img/user.svg', nullable=False)
+    last_login = db.Column(db.DateTime, server_default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), nullable=False)
 
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='user')
 
@@ -25,6 +32,19 @@ class User(db.Model, UserMixin):
         with db.session() as session:
             session.add(user)
             session.commit()
+
+    def login(self, password):
+        if check_password_hash(self.password, password):
+            login_user(self)
+            if (datetime.now() - self.last_login).total_seconds() > 86400:
+                self.last_login = datetime.now()
+                self.balance += 100
+                db.session().commit()
+                return True
+            else:
+                return False
+        else:
+            raise InvalidCredentialException()
 
 
 class UserSchema(Schema):
@@ -40,3 +60,11 @@ class UserSchema(Schema):
 class UserLoginSchema(Schema):
     username = fields.String(required=True, metadata={'description': '#### Username of the User'})
     password = fields.String(required=True, metadata={'description': '#### Password of the User'})
+
+
+class UserLoginResponseSchema(Schema):
+    username = fields.String(dump_only=True, required=True, metadata={'description': '#### Username of the User'})
+    balance = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Balance of the User'})
+    img = fields.String(dump_only=True, required=True, metadata={'description': '#### Image of the User'})
+    prize = fields.Boolean(dump_only=True, required=True, metadata={'description': '#### If the User have price'})
+    last_session = fields.DateTime(dump_only=True, required=True, metadata={'description': '#### Last session of the User'})

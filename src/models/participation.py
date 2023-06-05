@@ -28,7 +28,6 @@ class ParticipationSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Participation'})
     position = fields.Integer(required=True, metadata={'description': '#### Actual Position of the team'})
     points = fields.Integer(required=True, metadata={'description': '#### Points of the team'})
-    season = fields.Nested(SeasonSchema,required=True, metadata={'description': '#### SeasonId of the Participation'})
     team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### TeamId of the Participation'})
 
 

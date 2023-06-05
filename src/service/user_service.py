@@ -8,6 +8,7 @@ from email_validator import validate_email, EmailNotValidError
 
 from database import db
 from src.models import UserSchema, User, UserLoginSchema
+from src.models.user import InvalidCredentialException, UserLoginResponseSchema
 
 api_url = '/user'
 api_name = 'User'
@@ -44,19 +45,24 @@ def register_user(params):
         abort(409, message='control-error.unexpected')
 
 
-
 @user_blp.route(api_url + '/login', methods=['POST'])
 @user_blp.doc(tags=[api_name])
 @user_blp.arguments(UserLoginSchema)
-@user_blp.response(200, UserSchema)
+@user_blp.response(200, UserLoginResponseSchema)
 def login(params):
     user = User.query.filter_by(username=params['username']).first()
-    if user and check_password_hash(user.password, params['password']):
-        login_user(user)
-        return user
-    abort(401, message='control-error.invalid-credentials')
+    if user:
+        try:
+            prize = user.login(params['password'])
+            return {'prize': prize, 'username': user.username, 'balance': user.balance, 'img': user.img}
+        except InvalidCredentialException as e:
+            abort(401, message=e.message)
+    else:
+        abort(404, message='control-error.user-not-found')
 
-@user_blp.route('/logout', methods=['POST'])
+
+
+@user_blp.route(api_url + '/logout', methods=['POST'])
 @user_blp.doc(tags=[api_name])
 @login_required
 @user_blp.response(201)
