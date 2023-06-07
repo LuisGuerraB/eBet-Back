@@ -1,4 +1,5 @@
 from flask import Flask
+from dotenv import load_dotenv
 from database import db
 from flask_smorest import Api
 from flask_cors import CORS
@@ -12,6 +13,8 @@ from src.service import db_populator_blp, esport_blp, league_blp, match_blp, par
 
 
 def create_app():
+    load_dotenv()
+
     app = Flask(__name__)
     login_manager = LoginManager()
 
@@ -20,15 +23,14 @@ def create_app():
         return User.query.get(user_id)
 
     CORS(app, origins="http://localhost:4200", methods=["GET", "POST"], supports_credentials=True)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://root:1234@localhost/eBet"
+    app.config.from_object('config.Config')
     app.config["API_TITLE"] = "api"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.0.2"
     app.config["OPENAPI_URL_PREFIX"] = "apidocs"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "swagger"
     app.config["OPENAPI_SWAGGER_UI_VERSION"] = "3.22.2"
-    app.config["SECRET_KEY"] = "clave_secreta_segura"
-    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # Expiración de 1 día en segundos
+    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # Expiration 1 day
 
     # Initialize extensions
     db.init_app(app)

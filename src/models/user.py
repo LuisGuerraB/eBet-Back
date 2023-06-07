@@ -21,6 +21,7 @@ class User(db.Model, UserMixin):
     balance = db.Column(db.Integer, default=100, nullable=False)
     img = db.Column(db.String(), default='assets/img/user.svg', nullable=False)
     last_login = db.Column(db.DateTime, server_default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), nullable=False)
+    privileges = db.Column(db.String(3), server_default='', nullable=False)
 
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='user')
 
@@ -47,6 +48,9 @@ class User(db.Model, UserMixin):
             db.session().commit()
             return True
         return False
+
+    def has_privilege(self, privilege):
+        return self.privileges == privilege
 
 
 class UserSchema(Schema):
