@@ -54,12 +54,12 @@ def login(params):
     if user:
         try:
             prize = user.login(params['password'])
-            return {'prize': prize, 'username': user.username, 'balance': user.balance, 'img': user.img}
+            return {'prize': prize, 'username': user.username, 'balance': user.balance, 'img': user.img,
+                    'last_login': user.last_login}
         except InvalidCredentialException as e:
             abort(401, message=e.message)
     else:
         abort(404, message='control-error.user-not-found')
-
 
 
 @user_blp.route(api_url + '/logout', methods=['POST'])
@@ -70,3 +70,13 @@ def logout():
     # Cerrar sesión del usuario actual
     logout_user()
     return 201
+
+@user_blp.route(api_url + '/redeem', methods=['POST'])
+@user_blp.doc(tags=[api_name])
+@login_required
+@user_blp.response(201)
+def redeem_prize():
+    if current_user.redeem_prize():
+        return 201
+    else:
+        abort(404, message='prize-unredeemable')

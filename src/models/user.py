@@ -36,15 +36,17 @@ class User(db.Model, UserMixin):
     def login(self, password):
         if check_password_hash(self.password, password):
             login_user(self)
-            if (datetime.now() - self.last_login).total_seconds() > 86400:
-                self.last_login = datetime.now()
-                self.balance += 100
-                db.session().commit()
-                return True
-            else:
-                return False
+            return self.redeem_prize()
         else:
             raise InvalidCredentialException()
+
+    def redeem_prize(self):
+        if (datetime.now() - self.last_login).total_seconds() > 86400:
+            self.last_login = datetime.now()
+            self.balance += 100
+            db.session().commit()
+            return True
+        return False
 
 
 class UserSchema(Schema):
@@ -67,4 +69,4 @@ class UserLoginResponseSchema(Schema):
     balance = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Balance of the User'})
     img = fields.String(dump_only=True, required=True, metadata={'description': '#### Image of the User'})
     prize = fields.Boolean(dump_only=True, required=True, metadata={'description': '#### If the User have price'})
-    last_session = fields.DateTime(dump_only=True, required=True, metadata={'description': '#### Last session of the User'})
+    last_login = fields.DateTime(dump_only=True, required=True, metadata={'description': '#### Last login of the User'})
