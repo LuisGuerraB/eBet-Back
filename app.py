@@ -9,7 +9,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 from src.models import User
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
-    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp, user_blp
+    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp, user_blp, prize_blp
 
 
 def create_app():
@@ -24,13 +24,6 @@ def create_app():
 
     CORS(app, origins="http://localhost:4200", methods=["GET", "POST"], supports_credentials=True)
     app.config.from_object('config.Config')
-    app.config["API_TITLE"] = "api"
-    app.config["API_VERSION"] = "v1"
-    app.config["OPENAPI_VERSION"] = "3.0.2"
-    app.config["OPENAPI_URL_PREFIX"] = "apidocs"
-    app.config["OPENAPI_SWAGGER_UI_PATH"] = "swagger"
-    app.config["OPENAPI_SWAGGER_UI_VERSION"] = "3.22.2"
-    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # Expiration 1 day
 
     # Initialize extensions
     db.init_app(app)
@@ -52,6 +45,7 @@ def create_app():
     api.register_blueprint(bet_blp, url_prefix=url_prefix)
     api.register_blueprint(betting_odds_blp, url_prefix=url_prefix)
     api.register_blueprint(user_blp, url_prefix=url_prefix)
+    api.register_blueprint(prize_blp, url_prefix=url_prefix)
 
     # SWAGGER VIEW
     app.register_blueprint(get_swaggerui_blueprint(

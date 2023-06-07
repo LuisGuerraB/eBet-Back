@@ -50,7 +50,16 @@ class User(db.Model, UserMixin):
         return False
 
     def has_privilege(self, privilege):
-        return self.privileges == privilege
+        return True if privilege[0] in self.privileges else False
+
+    def parse_privileges(self):
+        privileges = []
+        for p in self.privileges:
+            if p == 'a':
+                privileges.append('admin')
+            if p == 'm':
+                privileges.append('marketing')
+        return ",".join(privileges)
 
 
 class UserSchema(Schema):

@@ -10,6 +10,7 @@ from .team_service import team_blp
 from .bet_service import bet_blp
 from .betting_odds_service import betting_odds_blp
 from .user_service import user_blp
+from .prize_service import prize_blp
 
 __all__ = [
     'db_populator_blp',

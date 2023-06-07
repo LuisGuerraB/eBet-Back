@@ -55,7 +55,7 @@ def login(params):
         try:
             prize = user.login(params['password'])
             return {'prize': prize, 'username': user.username, 'balance': user.balance, 'img': user.img,
-                    'last_login': user.last_login}
+                    'last_login': user.last_login, 'privileges': user.parse_privileges()}
         except InvalidCredentialException as e:
             abort(401, message=e.message)
     else:
