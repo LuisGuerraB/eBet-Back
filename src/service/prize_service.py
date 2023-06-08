@@ -1,4 +1,5 @@
 from flask import request
+from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
 from src.models.prize import PrizeSchema, Prize, FileSchema
@@ -16,16 +17,20 @@ prize_blp = Blueprint(
 
 @prize_blp.route(api_url + '/', methods=['POST'])
 @prize_blp.doc(tags=[api_name])
-@prize_blp.arguments(PrizeSchema)
+@prize_blp.arguments(PrizeSchema, location='query')
+@login_required
 @prize_blp.response(201)
 def create_prize(params):
-    if not request.files.get('img'):
-        abort(404, message='control-error.no-img')
-    try:
-        if Prize.create_prize(params['name'], params['amount'], request.files.get('img'), params['price']):
-            return
-        else:
-            abort(404, message='control-error.invalid-prize')
+    if current_user.has_privilege('marketing'):
+        if not request.files.get('img'):
+            abort(404, message='control-error.no-img')
+        try:
+            if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
+                return
+            else:
+                abort(404, message='control-error.invalid-prize')
 
-    except:
-        abort(404, message='control-error.unexpected')
+        except:
+            abort(404, message='control-error.unexpected')
+    else:
+        abort(401, message='control-error.no-privileges')

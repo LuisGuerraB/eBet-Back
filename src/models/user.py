@@ -57,9 +57,13 @@ class User(db.Model, UserMixin):
         for p in self.privileges:
             if p == 'a':
                 privileges.append('admin')
+                privileges.append('marketing')
             if p == 'm':
                 privileges.append('marketing')
-        return ",".join(privileges)
+        return privileges
+
+    def __str__(self):
+        return f'{self.username} {self.balance} {self.privileges}'
 
 
 class UserSchema(Schema):
@@ -83,3 +87,7 @@ class UserLoginResponseSchema(Schema):
     img = fields.String(dump_only=True, required=True, metadata={'description': '#### Image of the User'})
     prize = fields.Boolean(dump_only=True, required=True, metadata={'description': '#### If the User have price'})
     last_login = fields.DateTime(dump_only=True, required=True, metadata={'description': '#### Last login of the User'})
+
+
+class PrivilegesSchema(Schema):
+    privileges = fields.List(fields.String(), required=True, metadata={'description': '#### Privilege of the User'})

@@ -8,7 +8,7 @@ from email_validator import validate_email, EmailNotValidError
 
 from database import db
 from src.models import UserSchema, User, UserLoginSchema
-from src.models.user import InvalidCredentialException, UserLoginResponseSchema
+from src.models.user import InvalidCredentialException, UserLoginResponseSchema, PrivilegesSchema
 
 api_url = '/user'
 api_name = 'User'
@@ -55,7 +55,7 @@ def login(params):
         try:
             prize = user.login(params['password'])
             return {'prize': prize, 'username': user.username, 'balance': user.balance, 'img': user.img,
-                    'last_login': user.last_login, 'privileges': user.parse_privileges()}
+                    'last_login': user.last_login}
         except InvalidCredentialException as e:
             abort(401, message=e.message)
     else:
@@ -71,6 +71,7 @@ def logout():
     logout_user()
     return 201
 
+
 @user_blp.route(api_url + '/redeem', methods=['POST'])
 @user_blp.doc(tags=[api_name])
 @login_required
@@ -80,3 +81,11 @@ def redeem_prize():
         return 201
     else:
         abort(404, message='prize-unredeemable')
+
+
+@user_blp.route(api_url + '/privileges', methods=['GET'])
+@user_blp.doc(tags=[api_name])
+@user_blp.response(200, PrivilegesSchema)
+@login_required
+def get_privileges():
+    return {'privileges': current_user.parse_privileges()}
