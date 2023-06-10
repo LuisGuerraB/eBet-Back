@@ -21,6 +21,7 @@ class User(db.Model, UserMixin):
     balance = db.Column(db.Integer, default=100, nullable=False)
     img = db.Column(db.String(), default='assets/img/user.svg', nullable=False)
     last_login = db.Column(db.DateTime, server_default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), nullable=False)
+    privileges = db.Column(db.String(3), server_default='', nullable=False)
 
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='user')
 
@@ -48,6 +49,22 @@ class User(db.Model, UserMixin):
             return True
         return False
 
+    def has_privilege(self, privilege):
+        return True if privilege[0] in self.privileges else False
+
+    def parse_privileges(self):
+        privileges = []
+        for p in self.privileges:
+            if p == 'a':
+                privileges.append('admin')
+                privileges.append('marketing')
+            if p == 'm':
+                privileges.append('marketing')
+        return privileges
+
+    def __str__(self):
+        return f'{self.username} {self.balance} {self.privileges}'
+
 
 class UserSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the User'})
@@ -70,3 +87,7 @@ class UserLoginResponseSchema(Schema):
     img = fields.String(dump_only=True, required=True, metadata={'description': '#### Image of the User'})
     prize = fields.Boolean(dump_only=True, required=True, metadata={'description': '#### If the User have price'})
     last_login = fields.DateTime(dump_only=True, required=True, metadata={'description': '#### Last login of the User'})
+
+
+class PrivilegesSchema(Schema):
+    privileges = fields.List(fields.String(), required=True, metadata={'description': '#### Privilege of the User'})

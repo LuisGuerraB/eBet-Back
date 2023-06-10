@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${PGSQL_ADMIN_PASS}
-      POSTGRES_USER: root
+      POSTGRES_USER: ${PGSQL_ADMIN_USERNAME}
     volumes:
       - ${PGSQL_VOLUME}:/var/lib/postgresql/data
     ports:

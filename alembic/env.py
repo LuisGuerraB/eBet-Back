@@ -7,13 +7,13 @@ from database import db
 from alembic import context
 
 from flask_sqlalchemy import SQLAlchemy
-from src.models import League, Esport, Season, Participation, Team, Match, Result, Bet, BettingOdds, User
+from src.models import League, Esport, Season, Participation, Team, Match, Result, Bet, BettingOdds, User, Prize
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the configs file for Python logging.
+# Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -25,9 +25,9 @@ if config.config_file_name is not None:
 target_metadata = db.Model.metadata
 
 
-# other values from the configs, defined by the needs of env.py,
+# other values from the config, defined by the needs of env.py,
 # can be acquired:
-# my_important_option = configs.get_main_option("my_important_option")
+# my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
 

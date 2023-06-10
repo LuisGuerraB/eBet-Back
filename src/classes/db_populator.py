@@ -22,7 +22,6 @@ class DbPopulator:
         limit = 500
         total_matches_with_results = []
         with self.db.session() as session:
-
             # Fill the DB with matchs that have not yet occured
             for month in range(actual_month, 13):
                 self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
@@ -118,10 +117,8 @@ class DbPopulator:
                 if result_obj.set == set:
                     load = False
             if load:
-                result_obj_1, result_obj_2 = Result.create_from_web_json(result_json, match_id, set)
-                session.add(result_obj_1)
-                session.add(result_obj_2)
-                session.commit()
+                Result.create_from_web_json(session, result_json, match_id, set)
+
 
     def populate_teams(self, session, league_id):
         season = Season.get_regular_season(league_id)

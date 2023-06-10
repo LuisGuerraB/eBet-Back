@@ -1,8 +1,0 @@
-[default]
-DB_PORT = 5432
-DB_ENGINE = "PgSQL"
-DB_HOST = "localhost"
-DB_NAME = "eBet"
-
-DB_USER = "luis"
-DB_PASSWORD = "1234"

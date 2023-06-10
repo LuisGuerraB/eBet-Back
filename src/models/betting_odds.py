@@ -1,42 +1,44 @@
+from collections import defaultdict
+
 from marshmallow import Schema, fields, validate
 from sqlalchemy import or_
 
 from database import db
 from src.models import Probability, Match
 
+odds_related = ['winner']
+odds_not_related = ['kills', 'deaths', 'assists', 'towerKills', 'inhibitorKills', 'heraldKills', 'dragonKills',
+                    'elderDrakeKills', 'baronKills']
+
 
 class BettingOdds(db.Model):
     __tablename__ = 'betting_odds'
-    LEVERAGE = 0.03
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    win_odds = db.Column(db.Float(2), nullable=False)
-    gold_odds = db.Column(db.Float(2), nullable=False)
-    exp_odds = db.Column(db.Float(2), nullable=False)
-    towers_odds = db.Column(db.JSON(), nullable=False)
-    drakes_odds = db.Column(db.JSON(), nullable=False)
-    inhibitors_odds = db.Column(db.JSON(), nullable=False)
-    elders_odds = db.Column(db.JSON(), nullable=False)
-    barons_odds = db.Column(db.JSON(), nullable=False)
-    heralds_odds = db.Column(db.JSON(), nullable=False)
-    kills_odds = db.Column(db.JSON(), nullable=False)
-    deaths_odds = db.Column(db.JSON(), nullable=False)
-    assists_odds = db.Column(db.JSON(), nullable=False)
+    odds: db.Mapped[list['Odd']] = db.relationship('Odd', back_populates='betting_odd')
 
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
 
-    def __init__(self, match_id: int, team_id: int, opposing_team_id: int):
-        self.update_data(db.session(), match_id, team_id, opposing_team_id)
-        super().__init__()
+    @classmethod
+    def create(cls, session, match, team_id, opposing_team_id):
+        betting_odds = session.query(BettingOdds).filter(BettingOdds.team_id == team_id,
+                                                         BettingOdds.match_id == match.id).first()
+        if not betting_odds:
+            betting_odds = BettingOdds(match_id=match.id, team_id=team_id)
+            session.add(betting_odds)
+            session.commit()
+            betting_odds.update_data(session, opposing_team_id)
+        else:
+            betting_odds.update_data(session, opposing_team_id)
+        session.commit()
+        return betting_odds
 
-    def update_data(self, session, match_id: int, team_id: int, opposing_team_id: int):
-        self.team_id = team_id
-        self.match_id = match_id
-        match_league_id = session.query(Match).get(match_id).season.league.id
+    def update_data(self, session, opposing_team_id: int):
+        match_league_id = session.query(Match).get(self.match_id).season.league.id
 
         team_probs = (session.query(Probability)
-                      .filter(Probability.team_id == team_id,
+                      .filter(Probability.team_id == self.team_id,
                               or_(Probability.league_id == match_league_id, Probability.league_id == None))
                       .order_by(Probability.league_id).all())
 
@@ -45,49 +47,32 @@ class BettingOdds(db.Model):
                                        or_(Probability.league_id == match_league_id, Probability.league_id == None))
                                .order_by(Probability.league_id).all())
 
-        odds_attributes = ['win', 'gold', 'exp']
-        json_attributes = ['towers', 'drakes', 'inhibitors', 'elders', 'barons', 'heralds', 'kills', 'deaths',
-                           'assists']
         number_off_probs = min(len(team_probs), len(opposing_team_probs))
         percentage = 1 / number_off_probs
 
+        own_prob_units = []
+        away_prob_units = []
         for i in range(number_off_probs):
-            for attr in odds_attributes:
-                team_prob = getattr(team_probs[i], f'prob_{attr}')
-                opposing_team_prob = getattr(opposing_team_probs[i], f'prob_{attr}')
-                odds_attr = f'{attr}_odds'
-                if i == 0:
-                    setattr(self, odds_attr, self.calc_odds(team_prob, opposing_team_prob, percentage))
+            own_prob_units += team_probs[i].prob_units
+            away_prob_units += opposing_team_probs[i].prob_units
+
+        grouped_prob_units = {}
+        for prob_unit in own_prob_units + away_prob_units:
+            prob_unit_type = prob_unit.type
+            if prob_unit_type in grouped_prob_units:
+                grouped_prob_units[prob_unit_type].append(prob_unit)
+            else:
+                grouped_prob_units[prob_unit_type] = [prob_unit]
+        for prob_unit_type, prob_units in grouped_prob_units.items():
+            if len(prob_units) == (2 * number_off_probs):
+                if prob_unit_type in odds_related:
+                    odd = Odd.create_related(prob_unit_type, prob_units[number_off_probs:],
+                                             prob_units[:number_off_probs], self.id, percentage)
                 else:
-                    setattr(self, odds_attr,
-                            getattr(self, odds_attr) + self.calc_odds(team_prob, opposing_team_prob, percentage))
-
-            for attr in json_attributes:
-                dicRes = {}
-
-                for number, prob in getattr(team_probs[i], f'prob_{attr}').items():
-                    if (opposing_team_probs[i].__dict__[f'prob_{attr}'].get(number, None) is None
-                            or team_probs[i].__dict__[f'prob_{attr}'].get(number, None) is None):
-                        continue
-                    if i == 0:
-                        odd = self.calc_odds_not_related(prob, getattr(opposing_team_probs[i], f'prob_{attr}')[number],
-                                                         percentage)
-                        dicRes[number] = odd
-                    else:
-                        odd = self.calc_odds_not_related(prob, getattr(opposing_team_probs[i], f'prob_{attr}')[number],
-                                                         percentage)
-                        getattr(self, f'{attr}_odds')[number] += odd
-
-                if i == 0:
-                    setattr(self, f'{attr}_odds', dicRes)
-
-    def calc_odds(self, team_prob: float, opposing_team_prob: float, percentage=1.0) -> float:
-        return round((1 / ((team_prob + self.LEVERAGE) / (team_prob + opposing_team_prob))) * percentage, 2)
-
-    def calc_odds_not_related(self, team_prob: float, opposing_team_prob: float, percentage=1.0) -> float:
-        both_prob = team_prob * opposing_team_prob
-        res = 1 / (both_prob + team_prob + self.LEVERAGE)
-        return round(res * percentage, 2)
+                    odd = Odd.create_unrelated(prob_unit_type, prob_units[number_off_probs:],
+                                               prob_units[:number_off_probs], self.id, percentage)
+                session.add(odd)
+                session.commit()
 
     def __str__(self):
         return f'{self.win_odds} {self.gold_odds} {self.exp_odds}' \
@@ -95,31 +80,71 @@ class BettingOdds(db.Model):
                f' {self.heralds_odds} {self.kills_odds} {self.deaths_odds} {self.assists_odds}'
 
 
-class BettingOddSchema(Schema):
-    id = fields.Int(dump_only=True, required=True, metadata={'description': '#### Id of the Betting Odds'})
-    win_odds = fields.Float(format='0.00', required=True, metadata={'description': '#### Win odds'})
-    gold_odds = fields.Float(format='0.00', required=True, metadata={'description': '#### Gold odds'})
-    exp_odds = fields.Float(format='0.00', required=True, metadata={'description': '#### Exp odds'})
-    towers_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                              required=True, metadata={'description': '#### Tower odds'})
-    drakes_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                              required=True, metadata={'description': '#### Drakes odds'})
-    inhibitors_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                                  required=True, metadata={'description': '#### Inhibitors odds'})
-    elders_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                              required=True, metadata={'description': '#### Elders odds'})
-    barons_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                              required=True, metadata={'description': '#### Barons odds'})
-    heralds_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                               required=True, metadata={'description': '#### Herald odds'})
-    kills_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                             required=True, metadata={'description': '#### Kills odds'})
-    deaths_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                              required=True, metadata={'description': '#### Deaths odds'})
-    assists_odds = fields.Dict(keys=fields.Str(), values=fields.Float(format='0.00'), validate=validate.Length(3),
-                               required=True, metadata={'description': '#### Assists odds'})
+class Odd(db.Model):
+    __tablenmame__ = 'odd'
+    LEVERAGE = 0.05
+
+    type = db.Column(db.String(15), primary_key=True)
+    value = db.Column(db.JSON())
+
+    betting_odd_id = db.Column(db.Integer, db.ForeignKey('betting_odds.id'), primary_key=True)
+    betting_odd: db.Mapped['BettingOdds'] = db.relationship('BettingOdds', back_populates="odds")
+
+    def __repr__(self):
+        return f'<Odd : {self.type} - {self.value}>'
+
+    @classmethod
+    def calc_odds(cls, team_prob: float, opposing_team_prob: float, percentage=1.0, attr='') -> float:
+        return round((1 / ((team_prob + cls.LEVERAGE) / (team_prob + opposing_team_prob))) * percentage, 2)
+
+    @classmethod
+    def calc_odds_not_related(cls, team_prob: float, opposing_team_prob: float, percentage=1.0) -> float:
+        both_prob = (team_prob * opposing_team_prob) / 2
+        res = 1 / (both_prob + team_prob + cls.LEVERAGE)
+        return round(res * percentage, 2)
+
+    @classmethod
+    def create_related(cls, type, team_prob_list, opposing_prob_list, betting_odd_id, percentage=1.0):
+        res_value = {}
+        for i in range(len(team_prob_list)):
+            team_prob = team_prob_list[i].probs
+            opposing_prob = opposing_prob_list[i].probs
+            for subtype in team_prob.keys() & opposing_prob.keys():
+                res_value[subtype] = res_value.get(subtype, 0) + cls.calc_odds(team_prob[subtype],
+                                                                               opposing_prob[subtype],
+                                                                               percentage, type)
+        odd = cls.query.filter(cls.type == type, cls.betting_odd_id == betting_odd_id).first()
+
+        if odd is None:
+            odd = Odd(type=type, value=res_value, betting_odd_id=betting_odd_id)
+        else:
+            odd.value = res_value
+        return odd
+
+    @classmethod
+    def create_unrelated(cls, type, team_prob_list, opposing_prob_list, betting_odd_id, percentage=1.0):
+        res_value = {}
+        for i in range(len(team_prob_list)):
+            team_prob = team_prob_list[i].probs
+            opposing_prob = opposing_prob_list[i].probs
+            for subtype in team_prob.keys() & opposing_prob.keys():
+                res_value[subtype] = res_value.get(subtype, 0) + cls.calc_odds_not_related(team_prob[subtype],
+                                                                                           opposing_prob[subtype],
+                                                                                           percentage)
+        res_value = {subtype: value for subtype, value in res_value.items() if value > 1}
+        odd = cls.query.filter(cls.type == type, cls.betting_odd_id == betting_odd_id).first()
+        if odd is None:
+            odd = Odd(type=type, value=res_value, betting_odd_id=betting_odd_id)
+        else:
+            odd.value = res_value
+        return odd
+
+
+class OddSchema(Schema):
+    type = fields.String()
+    value = fields.Dict(keys=fields.String(), values=fields.Float())
 
 
 class BettingOddsByMatchSchema(Schema):
-    away_team_odds = fields.Nested(BettingOddSchema)
-    local_team_odds = fields.Nested(BettingOddSchema)
+    away_team_odds = fields.Nested(OddSchema, many=True)
+    local_team_odds = fields.Nested(OddSchema, many=True)

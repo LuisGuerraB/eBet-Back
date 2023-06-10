@@ -28,6 +28,4 @@ def create_bet(params):
         return bet
     except (InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, ExistingBetException) as e:
         abort(409, message=e.message)
-    except Exception as e:
-        abort(400, message=str(e))
 

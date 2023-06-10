@@ -20,7 +20,7 @@ participation_blp = Blueprint(
 def get_participation(participation_id):
     participation = Participation.query.get(participation_id)
     if participation is None:
-        abort(404, message='No participation with provided Id')
+        abort(404, message='control-error.no-participation')
     return participation
 
 @participation_blp.route(api_url+'/league/<int:league_id>', methods=['GET'])
@@ -30,7 +30,7 @@ def get_standings(league_id):
     try:
         participations = Participation.get_standings(league_id)
         if len(participations) == 0:
-            abort(404, message='no-regular-season')
+            abort(404, message='control-error.no-regular-season')
         return {'items': participations, 'total': len(participations)}
     except NoRegularSeasonException as e:
         abort(409, message=e.message)
