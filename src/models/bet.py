@@ -29,7 +29,7 @@ class Bet(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     date = db.Column(db.DateTime, nullable=False)
-    type = db.Column(db.Enum(BetType), nullable=False)
+    type = db.Column(db.String(15), nullable=False)
     subtype = db.Column(db.Integer)
     multiplier = db.Column(db.Float(2), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
@@ -55,17 +55,16 @@ class Bet(db.Model):
             betting_odd = BettingOdds.query.filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
             if betting_odd is None:
                 raise BettingOddsNotFoundException()
-            attr = getattr(betting_odd, params['type'].value + '_odds')
-            if params.get('subtype', None):
-                attr = attr.get(str(params['subtype']))
-            if params['multiplier'] != attr:
+
+            actual_odd = next((odd for odd in betting_odd.odds if odd.type.lower() == params['type'].lower()), None)
+            if actual_odd is None or params['multiplier'] != actual_odd.value[str(params['subtype'])]:
                 raise MultiplierNoMatchException()
             user.balance -= params['amount']
             bet = Bet(
                 date=date.today(),
                 type=params['type'],
                 subtype=params.get('subtype', None),
-                multiplier=attr,
+                multiplier=actual_odd.value[str(params['subtype'])],
                 amount=params['amount'],
                 match_id=params['match_id'],
                 team_id=params['team_id'],
@@ -79,8 +78,8 @@ class Bet(db.Model):
 class BetSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Bet'})
     date = fields.DateTime(dump_only=True, metadata={'description': '#### Date of the Bet'})
-    type = fields.Enum(BetType, required=True, metadata={'description': '#### Type of the Bet'})
-    subtype = fields.Integer(metadata={'description': '#### Subtype of the Bet'})
+    type = fields.String(required=True, metadata={'description': '#### Type of the Bet'})
+    subtype = fields.Integer(required=True, metadata={'description': '#### Subtype of the Bet'})
     multiplier = fields.Float(format='0.00', required=True, metadata={'description': '#### Multiplier of the Bet'})
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
     match_id = fields.Integer(required=True, metadata={'description': '#### MatchId of the Bet'})

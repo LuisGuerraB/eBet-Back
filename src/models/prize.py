@@ -1,7 +1,4 @@
 import os
-from copy import copy
-
-from PIL import Image
 from flask_smorest.fields import Upload
 
 from marshmallow import Schema, fields, validate

@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.create_table('bet',
     sa.Column('id', sa.Integer(),autoincrement=True, nullable=False),
     sa.Column('date', sa.DateTime(), nullable=False),
-    sa.Column('type', sa.Enum('WIN', 'EXP', 'GOLD', 'DRAKES', 'INHIBITORS', 'ELDERS', 'TOWERS', 'BARONS', 'HERALDS', 'KILLS', 'DEATHS', 'ASSISTS', name='bettype'), nullable=False),
+    sa.Column('type', sa.String(length=15), nullable=False),
     sa.Column('subtype', sa.Integer(), nullable=True),
     sa.Column('multiplier', sa.Float(precision=2), nullable=False),
     sa.Column('amount', sa.Integer(), nullable=False),
@@ -67,5 +67,4 @@ def downgrade() -> None:
     op.drop_table('bet')
     op.drop_table('user')
     op.drop_table('betting_odds')
-    op.execute('DROP TYPE bettype')
     # ### end Alembic commands ###

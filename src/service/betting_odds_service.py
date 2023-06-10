@@ -2,7 +2,7 @@ from flask_smorest import Blueprint, abort
 from app import db
 from src.classes import ProbCalculator
 
-from src.models import BettingOddsByMatchSchema, Match, BettingOdds, BettingOddSchema
+from src.models import BettingOddsByMatchSchema, Match, BettingOdds
 
 api_url = '/betting_odds'
 api_name = 'BettingOdds'
@@ -29,18 +29,6 @@ def get_betting_ods_from_match(match_id):
         prob.create_probabilities_from_team_at_season(session, match.away_team_id, match.season.league.id)
         prob.create_probabilities_from_team_at_season(session, match.away_team_id)
 
-        betting_odds_away_team = session.query(BettingOdds).filter(BettingOdds.team_id == match.away_team_id,
-                                                                   BettingOdds.match_id == match_id).first()
-        if not betting_odds_away_team:
-            betting_odds_away_team = BettingOdds(match_id, match.away_team_id, match.local_team_id)
-            session.add(betting_odds_away_team)
-        betting_odds_away_team.update_data(session, match_id, match.away_team_id, match.local_team_id)
-
-        betting_odds_local_team = session.query(BettingOdds).filter(BettingOdds.team_id == match.local_team_id,
-                                                                    BettingOdds.match_id == match_id).first()
-        if not betting_odds_local_team:
-            betting_odds_local_team = BettingOdds(match_id, match.local_team_id, match.away_team_id)
-            session.add(betting_odds_local_team)
-        betting_odds_local_team.update_data(session, match_id, match.local_team_id, match.away_team_id)
-        session.commit()
-        return {'away_team_odds': BettingOddSchema().dump(betting_odds_away_team), 'local_team_odds': BettingOddSchema().dump(betting_odds_local_team)}
+        betting_odds_away_team = BettingOdds.create(session, match, match.away_team_id, match.local_team_id)
+        betting_odds_local_team = BettingOdds.create(session, match, match.local_team_id, match.away_team_id)
+        return {'away_team_odds': betting_odds_away_team.odds, 'local_team_odds': betting_odds_local_team.odds}

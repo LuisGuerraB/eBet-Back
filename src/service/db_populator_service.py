@@ -68,11 +68,11 @@ def results(match_id, set):
 @db_populator_blp.response(204)
 def populate():
     """Populate whole database"""
-    try:
-        populator = DbPopulator(db)
-        populator.populate_DB()
-    except Exception as e:
-        abort(400, message=str(e))
+    #try:
+    populator = DbPopulator(db)
+    populator.populate_DB()
+    #except Exception as e:
+    #    abort(400, message=str(e))
 
 
 @db_populator_blp.route(api_url + '/probability', methods=['PUT'])
