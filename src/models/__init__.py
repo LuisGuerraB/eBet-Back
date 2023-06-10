@@ -6,7 +6,7 @@ from .result import Result, ResultSchema
 from .season import Season, SeasonSchema
 from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
-from .bet import Bet, BetSchema
+from .bet import Bet, BetSchema, BetListSchema
 from .betting_odds import BettingOdds, BettingOddsByMatchSchema
 from .user import User, UserSchema, UserLoginSchema, UserLoginResponseSchema, PrivilegesSchema
 from .prize import Prize, PrizeSchema
@@ -37,6 +37,7 @@ __all__ = [
     'PrizeSchema',
     'Bet',
     'BetSchema',
+    'BetListSchema',
     'BettingOdds',
     'BettingOddsByMatchSchema',
     'User',

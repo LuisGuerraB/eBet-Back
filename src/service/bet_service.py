@@ -3,7 +3,7 @@ from flask_smorest import Blueprint, abort
 
 from src.models import Bet, BetSchema
 from src.models.bet import InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, \
-    ExistingBetException
+    ExistingBetException, BetListSchema
 
 api_url = '/bet'
 api_name = 'Bet'
@@ -24,8 +24,18 @@ bet_blp = Blueprint(
 def create_bet(params):
     user = current_user
     try:
-        bet = Bet.create(user, **params)
-        return bet
-    except (InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, ExistingBetException) as e:
+        bet_id = Bet.create(user, **params)
+        return Bet.query.get(bet_id)
+    except (
+    InsuficientFundsException, BettingOddsNotFoundException, MultiplierNoMatchException, ExistingBetException) as e:
         abort(409, message=e.message)
 
+
+@bet_blp.route(api_url + '/list', methods=['GET'])
+@bet_blp.doc(tags=[api_name])
+@login_required
+@bet_blp.response(200, BetListSchema)
+def get_user_bets():
+    user = current_user
+    bets = Bet.get_user_bets(user)
+    return {'items': bets, 'total': len(bets)}

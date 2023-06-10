@@ -141,10 +141,10 @@ class Odd(db.Model):
 
 
 class OddSchema(Schema):
-    type = fields.String()
-    value = fields.Dict(keys=fields.String(), values=fields.Float())
+    type = fields.String(required=True,metadata={'description': '#### Odd type'})
+    value = fields.Dict(keys=fields.String(), values=fields.Float(), metadata={'description': '#### Odd value'})
 
 
 class BettingOddsByMatchSchema(Schema):
-    away_team_odds = fields.Nested(OddSchema, many=True)
-    local_team_odds = fields.Nested(OddSchema, many=True)
+    away_team_odds = fields.Nested(OddSchema, many=True, metadata={'description': '#### Away team odds'})
+    local_team_odds = fields.Nested(OddSchema, many=True, metadata={'description': '#### Local team odds'})

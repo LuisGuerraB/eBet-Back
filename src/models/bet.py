@@ -1,10 +1,10 @@
-from datetime import date
+from datetime import datetime
 
 from marshmallow import Schema, fields
 
 from database import db
 from src.enums import BetType
-from .match import Match
+from .match import Match, MatchSchema
 from .betting_odds import BettingOdds
 
 
@@ -33,6 +33,7 @@ class Bet(db.Model):
     subtype = db.Column(db.Integer)
     multiplier = db.Column(db.Float(2), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
+    result = db.Column(db.String(), nullable=False, server_default='waiting')
     match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
@@ -61,7 +62,7 @@ class Bet(db.Model):
                 raise MultiplierNoMatchException()
             user.balance -= params['amount']
             bet = Bet(
-                date=date.today(),
+                date=datetime.now(),
                 type=params['type'],
                 subtype=params.get('subtype', None),
                 multiplier=actual_odd.value[str(params['subtype'])],
@@ -72,7 +73,11 @@ class Bet(db.Model):
             )
             session.add(bet)
             session.commit()
-            return Bet.query.get(bet.id)
+            return bet.id
+
+    @classmethod
+    def get_user_bets(self, user):
+        return sorted(user.bets, key=lambda bet: bet.date, reverse=True)
 
 
 class BetSchema(Schema):
@@ -82,5 +87,13 @@ class BetSchema(Schema):
     subtype = fields.Integer(required=True, metadata={'description': '#### Subtype of the Bet'})
     multiplier = fields.Float(format='0.00', required=True, metadata={'description': '#### Multiplier of the Bet'})
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
-    match_id = fields.Integer(required=True, metadata={'description': '#### MatchId of the Bet'})
+    result = fields.String(metadata={'description': '#### Result of the Bet'})
+    match = fields.Nested(MatchSchema, dump_only=True, required=True,
+                          metadata={'description': '#### MatchId of the Bet'})
+    match_id = fields.Integer(required=True, load_only=True, metadata={'description': '#### MatchId of the Bet'})
     team_id = fields.Integer(required=True, metadata={'description': '#### TeamId of the Bet'})
+
+
+class BetListSchema(Schema):
+    items = fields.Nested(BetSchema, many=True, dump_only=True, metadata={'description': '#### List of Bets'})
+    total = fields.Integer(dump_only=True, metadata={'description': '#### Total of Bets'})
