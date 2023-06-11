@@ -27,17 +27,23 @@ class DbPopulator:
                 self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
 
             # Fill the DB with matchs that have finished
-            for month in range(1, actual_month + 1):
+            for month in range(actual_month + 1,1,-1):
                 matches_finished_list = self.populate_matches(session, MatchStatus.FINISHED, year=year, month=month,
                                                               limit=limit)
                 total_matches_with_results += matches_finished_list
 
             # Fill the DB with the results of finished matches
             for match in total_matches_with_results:
-                for set in range(match.sets):
+                match.update_result()
+                sets = match.final_set if match.final_set is not None else match.sets
+                for set in range(sets):
                     result = session.query(Result).filter_by(match_id=match.id, set=set + 1).first()
                     if result is None:
                         self.populate_result(session, match.id, set + 1)
+
+            leagues = session.query(League).all()
+            for league in leagues:
+                self.populate_teams(session, league.id)
 
             # Fill the DB with the probabilities of teams in general
             teams = session.query(Team).all()
@@ -118,7 +124,10 @@ class DbPopulator:
                     load = False
             if load:
                 Result.create_from_web_json(session, result_json, match_id, set)
-
+        match_obj = session.get(Match, match_id)
+        if match_obj.end_date is not None:
+            match_obj.update_result()
+        session.commit()
 
     def populate_teams(self, session, league_id):
         season = Season.get_regular_season(league_id)

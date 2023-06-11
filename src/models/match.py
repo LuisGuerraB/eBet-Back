@@ -14,12 +14,14 @@ class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     sets = db.Column(db.Integer, nullable=False)
+    final_set = db.Column(db.Integer, nullable=True)
     plan_date = db.Column(db.DateTime, nullable=False)
     ini_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     away_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     local_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     season_id = db.Column(db.Integer, db.ForeignKey('season.id'), nullable=False)
+    result = db.Column(db.JSON(), nullable=True)
 
     away_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[away_team_id])
     local_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[local_team_id])
@@ -39,7 +41,8 @@ class Match(db.Model):
         if finished is not None:
             now = datetime.now()
             if finished:
-                query = query.filter(or_(cls.end_date <= now, cls.end_date.isnot(None))).order_by(Match.plan_date.desc())
+                query = query.filter(or_(cls.end_date <= now, cls.end_date.isnot(None))).order_by(
+                    Match.plan_date.desc())
             else:
                 query = query.filter(cls.end_date.is_(None)).order_by(Match.plan_date.asc())
         try:
@@ -47,6 +50,16 @@ class Match(db.Model):
             return matches.items
         except Exception as e:
             return []
+
+    def update_result(self):
+        match_res = {}
+        results = self.results
+        for result in results:
+            win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
+            if win_stat is not None:
+                match_res[result.team.acronym] = match_res.get(result.team.acronym, 0) + win_stat
+        self.result = match_res
+        self.final_set = len(results) // 2
 
 
 class MatchSchema(Schema):
@@ -59,6 +72,7 @@ class MatchSchema(Schema):
     away_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Away team of the Match'})
     local_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Local team of the Match'})
     season = fields.Nested(SeasonSchema, required=True, metadata={'description': '#### Season of the Match'})
+    result = fields.Dict(keys=fields.String(required=True), values=fields.Integer(required=True), required=False)
 
 
 class MatchListArgumentSchema(Schema):

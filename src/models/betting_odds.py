@@ -109,10 +109,7 @@ class Odd(db.Model):
         for i in range(len(team_prob_list)):
             team_prob = team_prob_list[i].probs
             opposing_prob = opposing_prob_list[i].probs
-            for subtype in team_prob.keys() & opposing_prob.keys():
-                res_value[subtype] = res_value.get(subtype, 0) + cls.calc_odds(team_prob[subtype],
-                                                                               opposing_prob[subtype],
-                                                                               percentage, type)
+            res_value["1"] = res_value.get("1", 0) + cls.calc_odds(team_prob["1"],opposing_prob["1"],percentage, type)
         odd = cls.query.filter(cls.type == type, cls.betting_odd_id == betting_odd_id).first()
 
         if odd is None:
