@@ -22,13 +22,15 @@ def get_betting_ods_from_match(match_id):
     with db.session() as session:
         match = session.query(Match).get(match_id)
         if not match:
-            abort(404, 'Match not found')
+            abort(404, message='control-error.match-not-found')
         prob = ProbCalculator(db)
         prob.create_probabilities_from_team_at_season(session, match.local_team_id, match.season.league.id)
         prob.create_probabilities_from_team_at_season(session, match.local_team_id)
         prob.create_probabilities_from_team_at_season(session, match.away_team_id, match.season.league.id)
         prob.create_probabilities_from_team_at_season(session, match.away_team_id)
-
-        betting_odds_away_team = BettingOdds.create(session, match, match.away_team_id, match.local_team_id)
-        betting_odds_local_team = BettingOdds.create(session, match, match.local_team_id, match.away_team_id)
+        try:
+            betting_odds_local_team = BettingOdds.create(session, match, match.local_team_id, match.away_team_id)
+            betting_odds_away_team = BettingOdds.create(session, match, match.away_team_id, match.local_team_id)
+        except Exception as e:
+            abort(404, message='control-error.'+str(e))
         return {'away_team_odds': betting_odds_away_team.odds, 'local_team_odds': betting_odds_local_team.odds}

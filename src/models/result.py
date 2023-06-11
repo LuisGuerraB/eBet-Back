@@ -31,7 +31,7 @@ class Result(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='results')
     match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
 
-    __table_args__ = (Index('idx_match_set_team', 'match_id', 'set', 'team_id'),)
+    __table_args__ = (Index('idx_match_set_team', 'match_id', 'set', 'team_id', unique=True),)
 
     @classmethod
     def create_from_web_json(cls, session, json, match_id, set):

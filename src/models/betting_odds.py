@@ -48,6 +48,8 @@ class BettingOdds(db.Model):
                                .order_by(Probability.league_id).all())
 
         number_off_probs = min(len(team_probs), len(opposing_team_probs))
+        if number_off_probs == 0:
+            raise Exception('no-probabilities-found')
         percentage = 1 / number_off_probs
 
         own_prob_units = []
@@ -66,11 +68,11 @@ class BettingOdds(db.Model):
         for prob_unit_type, prob_units in grouped_prob_units.items():
             if len(prob_units) == (2 * number_off_probs):
                 if prob_unit_type in odds_related:
-                    odd = Odd.create_related(prob_unit_type, prob_units[number_off_probs:],
-                                             prob_units[:number_off_probs], self.id, percentage)
+                    odd = Odd.create_related(prob_unit_type, prob_units[:number_off_probs],
+                                             prob_units[number_off_probs:], self.id, percentage)
                 else:
-                    odd = Odd.create_unrelated(prob_unit_type, prob_units[number_off_probs:],
-                                               prob_units[:number_off_probs], self.id, percentage)
+                    odd = Odd.create_unrelated(prob_unit_type, prob_units[:number_off_probs],
+                                               prob_units[number_off_probs:], self.id, percentage)
                 session.add(odd)
                 session.commit()
 
@@ -141,7 +143,7 @@ class Odd(db.Model):
 
 
 class OddSchema(Schema):
-    type = fields.String(required=True,metadata={'description': '#### Odd type'})
+    type = fields.String(required=True, metadata={'description': '#### Odd type'})
     value = fields.Dict(keys=fields.String(), values=fields.Float(), metadata={'description': '#### Odd value'})
 
 

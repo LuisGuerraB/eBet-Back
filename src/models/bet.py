@@ -3,25 +3,8 @@ from datetime import datetime
 from marshmallow import Schema, fields
 
 from database import db
-from src.enums import BetType
 from .match import Match, MatchSchema
 from .betting_odds import BettingOdds
-
-
-class InsuficientFundsException(Exception):
-    message = "insuficient-funds"
-
-
-class ExistingBetException(Exception):
-    message = "existing-bet"
-
-
-class MultiplierNoMatchException(Exception):
-    message = "multiplier-no-match"
-
-
-class BettingOddsNotFoundException(Exception):
-    message = "betting-odds-not-found"
 
 
 class Bet(db.Model):
@@ -49,17 +32,17 @@ class Bet(db.Model):
     @classmethod
     def create(self, user, **params):
         if user.balance < params['amount']:
-            raise InsuficientFundsException()
+            raise Exception("insuficient-funds")
         if Bet.exist(params['match_id'], user.id, params['type'], params.get('subtype', None)):
-            raise ExistingBetException()
+            raise Exception("existing-bet")
         with db.session() as session:
             betting_odd = BettingOdds.query.filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
             if betting_odd is None:
-                raise BettingOddsNotFoundException()
+                raise Exception("betting-odds-not-found")
 
             actual_odd = next((odd for odd in betting_odd.odds if odd.type.lower() == params['type'].lower()), None)
             if actual_odd is None or params['multiplier'] != actual_odd.value[str(params['subtype'])]:
-                raise MultiplierNoMatchException()
+                raise Exception("multiplier-no-match")
             user.balance -= params['amount']
             bet = Bet(
                 date=datetime.now(),
@@ -78,6 +61,21 @@ class Bet(db.Model):
     @classmethod
     def get_user_bets(self, user):
         return sorted(user.bets, key=lambda bet: bet.date, reverse=True)
+
+    def delete(self, session):
+        user = self.user
+        user.balance += self.amount
+        session.delete(self)
+        session.commit()
+
+    def update_amount(self, session, new_amount):
+        user = self.user
+        amount_difference = new_amount - self.amount
+        if user.balance < amount_difference:
+            raise Exception("insufficient-funds")
+        user.balance -= amount_difference
+        self.amount = new_amount
+        session.commit()
 
 
 class BetSchema(Schema):
