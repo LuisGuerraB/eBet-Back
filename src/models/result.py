@@ -16,7 +16,8 @@ def obtain_percentage(json_frame, json_frame_opposite, type):
     return count / float(total)
 
 
-avoid_types = ['frames','team','goldEarned']
+avoid_types = ['frames', 'team', 'goldEarned']
+
 
 class Result(db.Model):
     __tablename__ = 'result'
@@ -50,7 +51,13 @@ class Result(db.Model):
             for stat in team:
                 if stat not in avoid_types:
                     session.add(Stat(type=stat, value=team[stat], result_id=result.id))
-            session.commit()
+
+
+    def __repr__(self):
+        return f'<Result : {self.team_id} - {self.match_id} - {self.set}>'
+
+    def __str__(self):
+        return f'{self.team_id} - {self.match_id} - {self.set}'
 
 
 class Stat(db.Model):
@@ -66,6 +73,7 @@ class Stat(db.Model):
 
     def __str__(self):
         return f'{self.type} - {self.value}'
+
 
 class StatSchema(Schema):
     type = fields.String(metadata={'description': '#### Type of the Stat'})

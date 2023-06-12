@@ -24,7 +24,7 @@ class Season(db.Model):
         regular_season = Season.query.filter(Season.league_id == league_id, Season.name.ilike('%regular%')).order_by(
             Season.ini_date.desc()).first()
         if regular_season is None:
-            raise NoRegularSeasonException()
+            return None
         return regular_season
 
 
