@@ -22,7 +22,7 @@ def create_app():
     def load_user(user_id: int):
         return User.query.get(user_id)
 
-    CORS(app, origins="http://localhost:4200", methods=["GET", "POST"], supports_credentials=True)
+    CORS(app, origins="http://localhost:4200", methods=["GET", "POST", "PUT", "DELETE"], supports_credentials=True)
     app.config.from_object('config.Config')
 
     # Initialize extensions
