@@ -35,7 +35,7 @@ class BettingOdds(db.Model):
         return betting_odds
 
     def update_data(self, session, opposing_team_id: int):
-        match_league_id = session.query(Match).get(self.match_id).season.league.id
+        match_league_id = session.query(Match).get(self.match_id).tournament.league.id
 
         team_probs = (session.query(Probability)
                       .filter(Probability.team_id == self.team_id,

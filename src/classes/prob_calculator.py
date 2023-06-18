@@ -7,11 +7,11 @@ class ProbCalculator:
     def __init__(self, db):
         self.db = db
 
-    def create_probabilities_from_team_at_season(self, session, team_id, league_id=None):
+    def create_probabilities_from_team_at_tournament(self, session, team_id, league_id=None):
         # Get match of the team at a league
         if league_id:
             matches = session.query(Match).filter(
-                Match.season.has(league_id=league_id), Match.end_date.isnot(None),
+                Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
                 or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).all()
         else:
             matches = session.query(Match).filter(Match.end_date.isnot(None),

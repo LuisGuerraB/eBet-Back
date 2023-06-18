@@ -16,13 +16,13 @@ db_populator_blp = Blueprint(
 )
 
 
-@db_populator_blp.route(api_url + '/seasons/<int:year>/<int:month>', methods=['PUT'])
+@db_populator_blp.route(api_url + '/tournaments/<int:year>/<int:month>', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.response(204)
-def seasons(year, month):
+def tournaments(year, month):
     try:
         populator = DbPopulator(db)
-        populator.populate_seasons(populator.db.session(), MatchStatus.NOT_STARTED, year, month)
+        populator.populate_tournaments(populator.db.session(), MatchStatus.NOT_STARTED, year, month)
     except Exception as e:
         abort(400, message=str(e))
 

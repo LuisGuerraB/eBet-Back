@@ -192,7 +192,7 @@ class ProbabilitySchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### ID of the probability'})
     prob_units = fields.Nested(ProbUnitSchema, many=True)
     team_id = fields.Integer(metadata={'description': '#### TeamId of the Probability'})
-    season_id = fields.Integer(metadata={'description': '#### SeasonId of the Probability'})
+    league_id = fields.Integer(metadata={'description': '#### LeagueId of the Probability'})
 
 
 class ProbabilityCreateSchema(Schema):

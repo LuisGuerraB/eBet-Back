@@ -5,7 +5,7 @@ from marshmallow import Schema, fields, validate
 
 from database import db
 from .team import TeamSchema
-from .season import SeasonSchema, Season
+from .tournament import TournamentSchema, Tournament
 
 
 class Match(db.Model):
@@ -20,12 +20,12 @@ class Match(db.Model):
     end_date = db.Column(db.DateTime)
     away_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     local_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    season_id = db.Column(db.Integer, db.ForeignKey('season.id'), nullable=False)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'), nullable=False)
     result = db.Column(db.JSON(), nullable=True)
 
     away_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[away_team_id])
     local_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[local_team_id])
-    season: db.Mapped['Season'] = db.relationship('Season', back_populates='matches')
+    tournament: db.Mapped['Tournament'] = db.relationship('Tournament', back_populates='matches')
     results: db.Mapped[list['Result']] = db.relationship('Result', back_populates='match')
     bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='match')
 
@@ -33,7 +33,7 @@ class Match(db.Model):
     def get_list(cls, league_id=None, finished=None, year=None, month=None, page=1, limit=10):
         query = cls.query
         if league_id:
-            query = query.join(Season).filter(Season.league_id == league_id)
+            query = query.join(Tournament).filter(Tournament.league_id == league_id)
         if year:
             query = query.filter(db.extract('year', cls.plan_date) == year)
         if month:
@@ -71,7 +71,7 @@ class MatchSchema(Schema):
     end_date = fields.DateTime(metadata={'description': '#### End date of the Match'})
     away_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Away team of the Match'})
     local_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Local team of the Match'})
-    season = fields.Nested(SeasonSchema, required=True, metadata={'description': '#### Season of the Match'})
+    tournament = fields.Nested(TournamentSchema, required=True, metadata={'description': '#### Tournament of the Match'})
     result = fields.Dict(keys=fields.String(required=True), values=fields.Integer(required=True), required=False)
 
 

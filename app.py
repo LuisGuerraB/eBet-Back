@@ -9,7 +9,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 from src.models import User
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
-    result_blp, season_blp, team_blp, bet_blp, betting_odds_blp, user_blp, prize_blp
+    result_blp, tournament_blp, team_blp, bet_blp, betting_odds_blp, user_blp, prize_blp
 
 
 def create_app():
@@ -40,7 +40,7 @@ def create_app():
     api.register_blueprint(participation_blp, url_prefix=url_prefix)
     api.register_blueprint(probability_blp, url_prefix=url_prefix)
     api.register_blueprint(result_blp, url_prefix=url_prefix)
-    api.register_blueprint(season_blp, url_prefix=url_prefix)
+    api.register_blueprint(tournament_blp, url_prefix=url_prefix)
     api.register_blueprint(team_blp, url_prefix=url_prefix)
     api.register_blueprint(bet_blp, url_prefix=url_prefix)
     api.register_blueprint(betting_odds_blp, url_prefix=url_prefix)
