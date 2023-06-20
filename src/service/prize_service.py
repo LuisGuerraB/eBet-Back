@@ -25,14 +25,11 @@ def create_prize(params):
     if current_user.has_privilege('marketing'):
         if not request.files.get('img'):
             abort(404, message='control-error.no-img')
-        try:
-            if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
-                return
-            else:
-                abort(404, message='control-error.invalid-prize')
+        if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
+            return
+        else:
+            abort(404, message='control-error.invalid-prize')
 
-        except:
-            abort(404, message='control-error.unexpected')
     else:
         abort(401, message='control-error.no-privileges')
 
