@@ -39,3 +39,9 @@ class PrizeSchema(Schema):
 
 class FileSchema(Schema):
     img = Upload(required=False)
+
+class PrizeListSchema(Schema):
+    items = fields.List(fields.Nested(PrizeSchema), dump_only=True, required=True,
+                        metadata={'description': '#### List of Prize'})
+    total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of prizes'})
+

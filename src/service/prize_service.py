@@ -2,7 +2,8 @@ from flask import request
 from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
-from src.models.prize import PrizeSchema, Prize, FileSchema
+from database import db
+from src.models.prize import PrizeSchema, Prize, FileSchema, PrizeListSchema
 
 api_url = '/prize'
 api_name = 'Prize'
@@ -34,3 +35,14 @@ def create_prize(params):
             abort(404, message='control-error.unexpected')
     else:
         abort(401, message='control-error.no-privileges')
+
+
+@prize_blp.route(api_url + '/list', methods=['GET'])
+@prize_blp.doc(tags=[api_name])
+@prize_blp.response(200, PrizeListSchema)
+def get_prizes():
+    with db.session() as session:
+        prizes = session.query(Prize).filter(Prize.amount > 0).all()
+        if prizes is None:
+            prizes = []
+        return {'items': prizes, 'total': len(prizes)}
