@@ -2,6 +2,7 @@ from flask import request
 from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
+from database import db
 from src.models.prize import PrizeSchema, Prize, FileSchema
 
 api_url = '/prize'
@@ -32,5 +33,31 @@ def create_prize(params):
 
         except:
             abort(404, message='control-error.unexpected')
+    else:
+        abort(401, message='control-error.no-privileges')
+
+
+@prize_blp.route(api_url + '/<int:prize_id>', methods=['DELETE'])
+@prize_blp.doc(tags=[api_name])
+@login_required
+@prize_blp.response(201)
+def create_prize(prize_id):
+    if current_user.has_privilege('marketing'):
+
+        with db.session() as session:
+            print('aa')
+            prize = session.query(Prize).get(prize_id)
+            print('bb')
+            if prize is not None:
+                print('cc')
+                if prize.delete(session):
+                    print('dd')
+                    return
+                else:
+                    print('ee')
+                    abort(404, message='control-error.unable-prize-deletion')
+            else:
+                print('ff')
+                abort(404, message='control-error.no-prize-found')
     else:
         abort(401, message='control-error.no-privileges')

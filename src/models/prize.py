@@ -27,6 +27,15 @@ class Prize(db.Model):
             session.commit()
             return True
 
+    def delete(self,session):
+        try:
+            os.remove(self.img)
+            session.delete(self)
+            session.commit()
+            return True
+        except:
+            return False
+
 
 class PrizeSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Prize'})
