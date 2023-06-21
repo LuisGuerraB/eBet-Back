@@ -3,7 +3,7 @@ from marshmallow import fields, validate
 
 from src.enums import MatchStatus
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Tournament, League, Result, Team, Participation
+from src.models import Match, Tournament, League, Result, Team, Participation, Probability
 import datetime
 
 
@@ -20,32 +20,12 @@ class DbPopulator:
         total_matches_with_results = []
         with self.db.session() as session:
             # Fill the DB with matchs that have not yet occured
-            for month in range(actual_month, 13):
-                self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
-
-            # Fill the DB with matchs that have finished
-            for month in range(actual_month + 1,1,-1):
-                matches_finished_list = self.populate_matches(session, MatchStatus.FINISHED, year=year, month=month,
-                                                              limit=limit)
-                total_matches_with_results += matches_finished_list
-
-            # Fill the DB with the results of finished matches
-            for match in total_matches_with_results:
-                match.update_result()
-                sets = match.final_set if match.final_set is not None else match.sets
-                for set in range(sets):
-                    result = session.query(Result).filter_by(match_id=match.id, set=set + 1).first()
-                    if result is None:
-                        self.populate_result(session, match.id, set + 1)
-
-            leagues = session.query(League).all()
-            for league in leagues:
-                self.populate_teams(session, league.id)
 
             # Fill the DB with the probabilities of teams in general
             teams = session.query(Team).all()
             for team in teams:
-                Probability.create_probabilities_from_team_at_season(session, team.id)
+                print('populate')
+                Probability.create_probabilities_from_team_at_league(session, team.id)
 
     def populate_probabilites(self, team_id, league_id=None):
         with self.db.session() as session:

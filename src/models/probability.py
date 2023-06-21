@@ -35,6 +35,7 @@ class Probability(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     prob_units: db.Mapped[list['ProbUnit']] = db.relationship('ProbUnit', back_populates='probability')
     prob_finish_early = db.Column(db.Float, nullable=False, server_default='0')
+    updated = db.Column(db.Boolean, nullable=False, server_default='0')
 
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
@@ -42,11 +43,14 @@ class Probability(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
 
     @classmethod
-    def create_probabilities_from_team_at_season(cls, session, team_id, league_id=None):
+    def create_probabilities_from_team_at_league(cls, session, team_id, league_id=None):
         # Get match of the team at a league
+        probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
+        if probability is not None and probability.updated:
+            return
         if league_id:
             matches = session.query(Match).filter(
-                Match.season.has(league_id=league_id), Match.end_date.isnot(None),
+                Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
                 or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).order_by(desc(Match.ini_date)).all()
         else:
             matches = session.query(Match).filter(Match.end_date.isnot(None),
@@ -63,8 +67,6 @@ class Probability(db.Model):
             prob_finished_early = ProbUnit.calc_prob(
                 [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
                  match.sets != 1])
-            probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
-            print(prob_finished_early)
             if probability is None:
                 probability = Probability(team_id=team_id, league_id=league_id)
                 session.add(probability)
@@ -73,6 +75,7 @@ class Probability(db.Model):
             else:
                 probability.prob_finish_early = prob_finished_early.get(1)
                 probability.update_data(session, results)
+            probability.updated = True
             session.commit()
 
     def update_data(self, session, results):
@@ -90,6 +93,14 @@ class Probability(db.Model):
                 prob_unit.update_data(type, grouped_stats[type])
                 session.add(prob_unit)
         session.commit()
+
+    @classmethod
+    def finish_early_match(self, session, match):
+        probabilities = session.query(Probability).filter(
+            or_(Probability.team_id == match.local_team_id, Probability.team_id == match.away_team_id))
+        prob_finish_early_array = [prob.prob_finish_early for prob in probabilities]
+        prob_finish_early = sum(prob_finish_early_array) / len(prob_finish_early_array)
+        return prob_finish_early
 
     def __str__(self):
         return f"Probability: {self.id}\n" \
