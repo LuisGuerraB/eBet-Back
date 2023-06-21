@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
 from database import db
-from src.models.prize import PrizeSchema, Prize, FileSchema
+from src.models.prize import PrizeSchema, Prize, PrizeListSchema
 
 api_url = '/prize'
 api_name = 'Prize'
@@ -25,16 +25,26 @@ def create_prize(params):
     if current_user.has_privilege('marketing'):
         if not request.files.get('img'):
             abort(404, message='control-error.no-img')
-        try:
-            if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
-                return
-            else:
-                abort(404, message='control-error.invalid-prize')
+        if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
+            return
+        else:
+            abort(404, message='control-error.invalid-prize')
 
         except:
             abort(404, message='control-error.unexpected')
     else:
         abort(401, message='control-error.no-privileges')
+
+
+@prize_blp.route(api_url + '/list', methods=['GET'])
+@prize_blp.doc(tags=[api_name])
+@prize_blp.response(200, PrizeListSchema)
+def get_prizes():
+    with db.session() as session:
+        prizes = session.query(Prize).filter(Prize.amount > 0).all()
+        if prizes is None:
+            prizes = []
+        return {'items': prizes, 'total': len(prizes)}
 
 
 @prize_blp.route(api_url + '/<int:prize_id>', methods=['DELETE'])
@@ -45,19 +55,13 @@ def create_prize(prize_id):
     if current_user.has_privilege('marketing'):
 
         with db.session() as session:
-            print('aa')
             prize = session.query(Prize).get(prize_id)
-            print('bb')
             if prize is not None:
-                print('cc')
                 if prize.delete(session):
-                    print('dd')
                     return
                 else:
-                    print('ee')
                     abort(404, message='control-error.unable-prize-deletion')
             else:
-                print('ff')
                 abort(404, message='control-error.no-prize-found')
     else:
         abort(401, message='control-error.no-privileges')
