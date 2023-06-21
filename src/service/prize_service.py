@@ -30,8 +30,6 @@ def create_prize(params):
         else:
             abort(404, message='control-error.invalid-prize')
 
-        except:
-            abort(404, message='control-error.unexpected')
     else:
         abort(401, message='control-error.no-privileges')
 
@@ -51,7 +49,7 @@ def get_prizes():
 @prize_blp.doc(tags=[api_name])
 @login_required
 @prize_blp.response(201)
-def create_prize(prize_id):
+def delete_prize(prize_id):
     if current_user.has_privilege('marketing'):
 
         with db.session() as session:
