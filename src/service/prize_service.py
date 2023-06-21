@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
 from database import db
-from src.models.prize import PrizeSchema, Prize, FileSchema, PrizeListSchema
+from src.models.prize import PrizeSchema, Prize, PrizeListSchema
 
 api_url = '/prize'
 api_name = 'Prize'
@@ -43,3 +43,23 @@ def get_prizes():
         if prizes is None:
             prizes = []
         return {'items': prizes, 'total': len(prizes)}
+
+
+@prize_blp.route(api_url + '/<int:prize_id>', methods=['DELETE'])
+@prize_blp.doc(tags=[api_name])
+@login_required
+@prize_blp.response(201)
+def delete_prize(prize_id):
+    if current_user.has_privilege('marketing'):
+
+        with db.session() as session:
+            prize = session.query(Prize).get(prize_id)
+            if prize is not None:
+                if prize.delete(session):
+                    return
+                else:
+                    abort(404, message='control-error.unable-prize-deletion')
+            else:
+                abort(404, message='control-error.no-prize-found')
+    else:
+        abort(401, message='control-error.no-privileges')
