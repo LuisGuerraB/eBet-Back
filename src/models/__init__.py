@@ -3,13 +3,13 @@ from .league import League, LeagueSchema, LeagueListSchema
 from .match import Match, MatchSchema, MatchListArgumentSchema, MatchListSchema
 from .participation import Participation, ParticipationSchema, ParticipationListSchema
 from .result import Result, ResultSchema
-from .season import Season, SeasonSchema
+from .tournament import Tournament, TournamentSchema
 from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema, BetListSchema
 from .betting_odds import BettingOdds, BettingOddsByMatchSchema
 from .user import User, UserSchema, UserLoginSchema, UserLoginResponseSchema, PrivilegesSchema
-from .prize import Prize, PrizeSchema
+from .prize import Prize, PrizeSchema, PrizeListSchema
 
 __all__ = [
     'Esport',
@@ -26,8 +26,8 @@ __all__ = [
     'ParticipationListSchema',
     'Result',
     'ResultSchema',
-    'Season',
-    'SeasonSchema',
+    'Tournament',
+    'TournamentSchema',
     'Team',
     'TeamSchema',
     'Probability',
@@ -35,6 +35,7 @@ __all__ = [
     'ProbabilityCreateSchema',
     'Prize',
     'PrizeSchema',
+    'PrizeListSchema',
     'Bet',
     'BetSchema',
     'BetListSchema',

@@ -26,10 +26,10 @@ def upgrade() -> None:
                     sa.Column('end_date', sa.DateTime(), nullable=True),
                     sa.Column('away_team_id', sa.Integer(), nullable=False),
                     sa.Column('local_team_id', sa.Integer(), nullable=False),
-                    sa.Column('season_id', sa.Integer(), nullable=False),
+                    sa.Column('tournament_id', sa.Integer(), nullable=False),
                     sa.ForeignKeyConstraint(['away_team_id'], ['team.id'], ),
                     sa.ForeignKeyConstraint(['local_team_id'], ['team.id'], ),
-                    sa.ForeignKeyConstraint(['season_id'], ['season.id'], ),
+                    sa.ForeignKeyConstraint(['tournament_id'], ['tournament.id'], ),
                     sa.PrimaryKeyConstraint('id')
                     )
     # ### end Alembic commands ###

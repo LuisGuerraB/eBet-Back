@@ -51,7 +51,7 @@ class ApiScrapper:
         return r.json()['data']['gameByMatch']
 
     @classmethod
-    def get_teams(cls, season_id: int):
+    def get_teams(cls, tournament_id: int):
         r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "TournamentStandings",
@@ -60,13 +60,13 @@ class ApiScrapper:
                      "query TournamentStandings($tournamentId: ID!) {\n  standings(tournamentId: $tournamentId) {\n    ...CoreRank\n    }\n}",
             'variables':
                 {
-                    'tournamentId': season_id,
+                    'tournamentId': tournament_id,
                 }
         })
         return r.json()['data']['standings']
 
     @classmethod
-    def get_seasons(cls, status: MatchStatus, year: int, month: int):
+    def get_tournaments(cls, status: MatchStatus, year: int, month: int):
         r = requests.post(cls.URL + "/matches/graphql", json=
         {
             'operationName': "ListPagedAllMatches",

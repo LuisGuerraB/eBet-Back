@@ -188,7 +188,7 @@ class ProbabilitySchema(Schema):
     prob_finish_early = fields.Float(dump_only=True,
                                      metadata={'description': '#### Probability of finishing the game early'})
     team_id = fields.Integer(metadata={'description': '#### TeamId of the Probability'})
-    season_id = fields.Integer(metadata={'description': '#### SeasonId of the Probability'})
+    league_id = fields.Integer(metadata={'description': '#### LeagueId of the Probability'})
 
 
 class ProbabilityCreateSchema(Schema):

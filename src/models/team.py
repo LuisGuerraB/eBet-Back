@@ -14,7 +14,7 @@ class Team(db.Model):
     nationality = db.Column(db.String)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
 
-    seasons: db.Mapped[list['Participation']] = db.relationship(back_populates='team')
+    tournaments: db.Mapped[list['Participation']] = db.relationship(back_populates='team')
     results: db.Mapped[list['Result']] = db.relationship(back_populates='team')
     probabilities: db.Mapped[list['Probability']] = db.relationship(back_populates='team')
     matches: db.Mapped[list['Match']] = db.relationship('Match', secondary='match',

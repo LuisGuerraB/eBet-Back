@@ -13,7 +13,7 @@ class League(db.Model):
     esport_id = db.Column(db.Integer(), db.ForeignKey('esport.id'), nullable=False)
 
     esport: db.Mapped['Esport'] = db.relationship('Esport', back_populates='leagues')
-    seasons: db.Mapped[list['Season']] = db.relationship('Season', back_populates='league')
+    tournaments: db.Mapped[list['Tournament']] = db.relationship('Tournament', back_populates='league')
 
 
 class LeagueSchema(Schema):

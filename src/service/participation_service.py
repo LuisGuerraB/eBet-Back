@@ -1,7 +1,6 @@
 from flask_smorest import Blueprint,abort
 
 from src.models import ParticipationSchema, Participation, ParticipationListSchema
-from src.models.season import NoRegularSeasonException
 
 api_url = '/participation'
 api_name = 'Participation'
@@ -30,9 +29,9 @@ def get_standings(league_id):
     try:
         participations = Participation.get_standings(league_id)
         if len(participations) == 0:
-            abort(404, message='control-error.no-regular-season')
+            abort(404, message='control-error.no-participation')
         return {'items': participations, 'total': len(participations)}
-    except NoRegularSeasonException as e:
-        abort(409, message=e.message)
+    except Exception as e:
+        abort(409, message=str(e))
 
 

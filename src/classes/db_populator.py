@@ -3,7 +3,7 @@ from marshmallow import fields, validate
 
 from src.enums import MatchStatus
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Season, League, Result, Team, Participation, Probability
+from src.models import Match, Tournament, League, Result, Team, Participation
 import datetime
 
 
@@ -15,10 +15,32 @@ class DbPopulator:
     def populate_DB(self):
         today = datetime.date.today()
         year = today.year
-        actual_month = 12
+        actual_month = today.month
         limit = 500
         total_matches_with_results = []
         with self.db.session() as session:
+            # Fill the DB with matchs that have not yet occured
+            for month in range(actual_month, 13):
+                self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
+
+            # Fill the DB with matchs that have finished
+            for month in range(actual_month + 1,1,-1):
+                matches_finished_list = self.populate_matches(session, MatchStatus.FINISHED, year=year, month=month,
+                                                              limit=limit)
+                total_matches_with_results += matches_finished_list
+
+            # Fill the DB with the results of finished matches
+            for match in total_matches_with_results:
+                match.update_result()
+                sets = match.final_set if match.final_set is not None else match.sets
+                for set in range(sets):
+                    result = session.query(Result).filter_by(match_id=match.id, set=set + 1).first()
+                    if result is None:
+                        self.populate_result(session, match.id, set + 1)
+
+            leagues = session.query(League).all()
+            for league in leagues:
+                self.populate_teams(session, league.id)
 
             # Fill the DB with the probabilities of teams in general
             teams = session.query(Team).all()
@@ -39,9 +61,9 @@ class DbPopulator:
                 continue
             match_obj = session.get(Match, match_json['id'])
             if match_obj is None:
-                if session.get(Season, match_json['tournamentId']) is None:
-                    self.populate_seasons(session, status, int(match_json['scheduledAt'][:4]),
-                                          int(match_json['scheduledAt'][5:7]))
+                if session.get(Tournament, match_json['tournamentId']) is None:
+                    self.populate_tournaments(session, status, int(match_json['scheduledAt'][:4]),
+                                              int(match_json['scheduledAt'][5:7]))
                 if (session.get(Team, match_json['awayTeamId']) is None or
                         session.get(Team, match_json['homeTeamId']) is None):
                     self.populate_teams(session, match_json['tournament']['serie']['league']['id'])
@@ -52,7 +74,7 @@ class DbPopulator:
                     plan_date=match_json['scheduledAt'],
                     away_team_id=match_json['awayTeamId'],
                     local_team_id=match_json['homeTeamId'],
-                    season_id=match_json['tournamentId'],
+                    tournament_id=match_json['tournamentId'],
                     ini_date=match_json['beginAt'],
                     end_date=match_json['endAt']
                 )
@@ -63,12 +85,12 @@ class DbPopulator:
         session.commit()
         return match_list_result
 
-    def populate_seasons(self, session, status, year, month):
-        season_list = ApiScrapper.get_seasons(status, year, month)
-        for season_json in season_list:
-            season_obj = session.get(Season, season_json['id'])
-            if season_obj is None:
-                league_json = season_json['serie']['league']
+    def populate_tournaments(self, session, status, year, month):
+        tournament_list = ApiScrapper.get_tournaments(status, year, month)
+        for tournament_json in tournament_list:
+            tournament_obj = session.get(Tournament, tournament_json['id'])
+            if tournament_obj is None:
+                league_json = tournament_json['serie']['league']
                 if session.get(League, league_json['id']) is None:
                     league_obj = League(
                         id=league_json['id'],
@@ -77,15 +99,15 @@ class DbPopulator:
                         img=league_json['imageUrl'],
                     )
                     session.add(league_obj)
-                season_obj = Season(
-                    id=season_json['id'],
-                    name=season_json['name'],
-                    serie_id=season_json['serie']['id'],
-                    ini_date=season_json['beginAt'],
-                    end_date=season_json['endAt'],
+                tournament_obj = Tournament(
+                    id=tournament_json['id'],
+                    name=tournament_json['name'],
+                    serie_id=tournament_json['serie']['id'],
+                    ini_date=tournament_json['beginAt'],
+                    end_date=tournament_json['endAt'],
                     league_id=league_json['id']
                 )
-                session.add(season_obj)
+                session.add(tournament_obj)
         session.commit()
 
     def populate_result(self, session, match_id, set=1):
@@ -107,9 +129,9 @@ class DbPopulator:
         session.commit()
 
     def populate_teams(self, session, league_id):
-        season = Season.get_regular_season(league_id)
-        if season is not None:
-            team_list = ApiScrapper.get_teams(season.id)
+        regular_tournament = Tournament.get_regular_tournament(league_id)
+        if regular_tournament is not None:
+            team_list = ApiScrapper.get_teams(regular_tournament.id)
             for team in team_list:
                 team_json = team['team']
                 team_obj = session.get(Team, team_json['id'])
@@ -125,13 +147,13 @@ class DbPopulator:
                         league_id=league_id
                     )
                     session.add(team_obj)
-                self.populate_participations(session, team_obj, team['position'], team['point'], season.id)
+                self.populate_participations(session, team_obj, team['position'], team['point'], regular_tournament.id)
         session.commit()
 
-    def populate_participations(self, session, team, position, points, season_id):
-        participation = session.query(Participation).filter_by(team_id=team.id, season_id=season_id).first()
+    def populate_participations(self, session, team, position, points, tournament_id):
+        participation = session.query(Participation).filter_by(team_id=team.id, tournament_id=tournament_id).first()
         if participation is None:
-            participation = Participation(team_id=team.id, season_id=season_id, position=position, points=points)
+            participation = Participation(team_id=team.id, tournament_id=tournament_id, position=position, points=points)
             session.add(participation)
         participation.position = position
         participation.points = points

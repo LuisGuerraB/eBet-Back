@@ -5,7 +5,7 @@ from .match_service import match_blp
 from .participation_service import participation_blp
 from .probability_service import probability_blp
 from .result_service import result_blp
-from .season_service import season_blp
+from .tournament_service import tournament_blp
 from .team_service import team_blp
 from .bet_service import bet_blp
 from .betting_odds_service import betting_odds_blp
@@ -20,7 +20,7 @@ __all__ = [
     'participation_blp',
     'probability_blp',
     'result_blp',
-    'season_blp',
+    'tournament_blp',
     'team_blp',
     'bet_blp',
     'betting_odds_blp',
