@@ -18,7 +18,7 @@ class Prize(db.Model):
 
     @classmethod
     def create_prize(cls, amount, img, price):
-        saving_route = os.path.join(Config.UPLOAD_FOLDER,'images', secure_filename(img.filename))
+        saving_route = os.path.join(Config.UPLOAD_FOLDER, 'images', secure_filename(img.filename))
         img.save(saving_route)
 
         prize = Prize(amount=amount, img=saving_route, price=price)
@@ -27,7 +27,7 @@ class Prize(db.Model):
             session.commit()
             return True
 
-    def delete(self,session):
+    def delete(self, session):
         try:
             os.remove(self.img)
             session.delete(self)
@@ -35,6 +35,12 @@ class Prize(db.Model):
             return True
         except:
             return False
+
+    def buy(self, session):
+        self.amount -= 1
+        if self.amount == 0:
+            self.delete(session)
+        session.commit()
 
 
 class PrizeSchema(Schema):
@@ -46,11 +52,11 @@ class PrizeSchema(Schema):
     img = fields.String(required=True, dump_only=True, metadata={'description': '#### Image of the Prize'})
 
 
-class FileSchema(Schema):
-    img = Upload(required=False)
+class EmailSchema(Schema):
+    email = fields.Email(required=False)
+
 
 class PrizeListSchema(Schema):
     items = fields.List(fields.Nested(PrizeSchema), dump_only=True, required=True,
                         metadata={'description': '#### List of Prize'})
     total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of prizes'})
-

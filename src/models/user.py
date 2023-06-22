@@ -6,6 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from database import db
 from flask_login import UserMixin, login_user
 
+from src.enums import Privilege
+
 
 class InvalidCredentialException(Exception):
     message = "control-error.invalid-credentials"
@@ -50,16 +52,16 @@ class User(db.Model, UserMixin):
         return False
 
     def has_privilege(self, privilege):
-        return True if privilege[0] in self.privileges else False
+        return True if privilege.value[0] in self.privileges else False
 
     def parse_privileges(self):
         privileges = []
         for p in self.privileges:
             if p == 'a':
-                privileges.append('admin')
-                privileges.append('marketing')
+                privileges.append(Privilege.ADMIN.value)
+                privileges.append(Privilege.MARKETING.value)
             if p == 'm':
-                privileges.append('marketing')
+                privileges.append(Privilege.MARKETING.value)
         return privileges
 
     def __str__(self):
