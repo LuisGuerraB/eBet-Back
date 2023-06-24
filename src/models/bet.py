@@ -1,8 +1,10 @@
 from datetime import datetime
 
 from marshmallow import Schema, fields
+from sqlalchemy import or_
 
 from database import db
+from . import Probability
 from .match import Match, MatchSchema
 from .betting_odds import BettingOdds
 
@@ -17,6 +19,7 @@ class Bet(db.Model):
     multiplier = db.Column(db.Float(2), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
     result = db.Column(db.String(), nullable=False, server_default='waiting')
+    set = db.Column(db.Integer, nullable=True)
     match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
@@ -41,8 +44,13 @@ class Bet(db.Model):
                 raise Exception("betting-odds-not-found")
 
             actual_odd = next((odd for odd in betting_odd.odds if odd.type.lower() == params['type'].lower()), None)
-            if actual_odd is None or params['multiplier'] != actual_odd.value[str(params['subtype'])]:
+            if actual_odd is None:
                 raise Exception("multiplier-no-match")
+            elif params['multiplier'] != actual_odd.value[str(params['subtype'])]:
+                match = Match.query.get(params['match_id'])
+                prob_finish_early = Probability.finish_early_match(session, match)
+                if params['multiplier'] != actual_odd.value[str(params['subtype'])] * (1 / (prob_finish_early * 1.1)):
+                    raise Exception("multiplier-no-match")
             user.balance -= params['amount']
             bet = Bet(
                 date=datetime.now(),
@@ -50,6 +58,7 @@ class Bet(db.Model):
                 subtype=params.get('subtype', None),
                 multiplier=actual_odd.value[str(params['subtype'])],
                 amount=params['amount'],
+                set=params.get('set', None),
                 match_id=params['match_id'],
                 team_id=params['team_id'],
                 user_id=user.id
@@ -86,6 +95,7 @@ class BetSchema(Schema):
     multiplier = fields.Float(format='0.00', required=True, metadata={'description': '#### Multiplier of the Bet'})
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
     result = fields.String(metadata={'description': '#### Result of the Bet'})
+    set = fields.Integer(metadata={'description': '#### Set of the Bet'})
     match = fields.Nested(MatchSchema, dump_only=True, required=True,
                           metadata={'description': '#### MatchId of the Bet'})
     match_id = fields.Integer(required=True, load_only=True, metadata={'description': '#### MatchId of the Bet'})

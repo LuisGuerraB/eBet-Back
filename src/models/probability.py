@@ -1,9 +1,11 @@
 from collections import defaultdict
 
 from marshmallow import Schema, fields, validate
+from sqlalchemy import or_, desc
 from sqlalchemy.orm import validates
 
 from database import db
+from src.models import Match, Result
 
 
 def calc_len_min(prob_ini, jump):
@@ -32,11 +34,49 @@ class Probability(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     prob_units: db.Mapped[list['ProbUnit']] = db.relationship('ProbUnit', back_populates='probability')
+    prob_finish_early = db.Column(db.Float, nullable=False, server_default='0')
+    updated = db.Column(db.Boolean, nullable=False, server_default='0')
 
     team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
 
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
+
+    @classmethod
+    def create_probabilities_from_team_at_league(cls, session, team_id, league_id=None):
+        # Get match of the team at a league
+        probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
+        if probability is not None and probability.updated:
+            return
+        if league_id:
+            matches = session.query(Match).filter(
+                Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
+                or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).order_by(desc(Match.ini_date)).all()
+        else:
+            matches = session.query(Match).filter(Match.end_date.isnot(None),
+                                                  or_(Match.local_team_id == team_id,
+                                                      Match.away_team_id == team_id)).order_by(
+                desc(Match.ini_date)).all()
+
+        # Get the results of the match an order it by match.ini_date
+        results = session.query(Result).filter(
+            Result.match_id.in_([match.id for match in matches]),
+            Result.team_id == team_id
+        ).join(Result.match).order_by(desc(Match.ini_date)).all()
+        if results:
+            prob_finished_early = ProbUnit.calc_prob(
+                [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
+                 match.sets != 1])
+            if probability is None:
+                probability = Probability(team_id=team_id, league_id=league_id)
+                session.add(probability)
+                probability.update_data(session, results)
+                probability.prob_finish_early = prob_finished_early.get(1)
+            else:
+                probability.prob_finish_early = prob_finished_early.get(1)
+                probability.update_data(session, results)
+            probability.updated = True
+            session.commit()
 
     def update_data(self, session, results):
         grouped_stats = defaultdict(list)
@@ -49,49 +89,18 @@ class Probability(db.Model):
             if prob_unit is not None:
                 prob_unit.update_data(type, grouped_stats[type])
             else:
-                prob_unit = ProbUnit(type, grouped_stats[type], self.id)
+                prob_unit = ProbUnit(type=type, probs={}, probability_id=self.id)
+                prob_unit.update_data(type, grouped_stats[type])
                 session.add(prob_unit)
         session.commit()
 
     @classmethod
-    def calc_prob_win(cls, list):
-        count = 0
-        prob_total = 0
-        prob_ini = cls.PROB_INI
-        prob_res = 0
-        for i in list:
-            count += 1
-            if i:
-                prob_res += prob_ini
-            prob_total += prob_ini
-            if prob_ini > cls.JUMP:
-                prob_ini -= cls.JUMP
-            if prob_total >= 100:
-                break
-        if len(list) < cls.LEN_MIN:
-            prob_res *= 100 / prob_total
-
-        return cls.justify_probability(round(prob_res / 100.00, 2))
-
-    @classmethod
-    def calc_prob_percent(cls, list):
-        prob_total = 0
-        prob_ini = cls.PROB_INI
-        prob_res = 0
-        for i in list:
-
-            if i >= 0.5:
-                prob_res += prob_ini
-            prob_total += prob_ini
-            if prob_ini > cls.JUMP:
-                prob_ini -= cls.JUMP
-            if prob_total >= 100:
-                break
-
-        if len(list) < cls.LEN_MIN:
-            prob_res *= 100 / prob_total
-
-        return cls.justify_probability(round(prob_res / 100.00, 2))
+    def finish_early_match(self, session, match):
+        probabilities = session.query(Probability).filter(
+            or_(Probability.team_id == match.local_team_id, Probability.team_id == match.away_team_id))
+        prob_finish_early_array = [prob.prob_finish_early for prob in probabilities]
+        prob_finish_early = sum(prob_finish_early_array) / len(prob_finish_early_array)
+        return prob_finish_early
 
     def __str__(self):
         return f"Probability: {self.id}\n" \
@@ -127,10 +136,6 @@ class ProbUnit(db.Model):
             raise ValueError("JSON can't have more than 3 elements")
         return value
 
-    def __init__(self, prob_type, res_list, prob_id):
-        self.update_data(prob_type, res_list)
-        super().__init__(type=prob_type, probs=self.probs, probability_id=prob_id)
-
     def update_data(self, prob_type, res_list):
         multiplier = type_multiplier_dictionary.get(prob_type, None)
         if multiplier is not None:
@@ -165,7 +170,7 @@ class ProbUnit(db.Model):
                 prob_ini -= cls.JUMP
             if prob_total >= 100:
                 break
-        if len_min:
+        if len_min and prob_total != 0:
             prob_res[0] *= 100 / prob_total
             prob_res[1] *= 100 / prob_total
             prob_res[2] *= 100 / prob_total
@@ -191,6 +196,8 @@ class ProbUnitSchema(Schema):
 class ProbabilitySchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### ID of the probability'})
     prob_units = fields.Nested(ProbUnitSchema, many=True)
+    prob_finish_early = fields.Float(dump_only=True,
+                                     metadata={'description': '#### Probability of finishing the game early'})
     team_id = fields.Integer(metadata={'description': '#### TeamId of the Probability'})
     league_id = fields.Integer(metadata={'description': '#### LeagueId of the Probability'})
 

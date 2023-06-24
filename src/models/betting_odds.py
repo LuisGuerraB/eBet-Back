@@ -147,3 +147,4 @@ class OddSchema(Schema):
 class BettingOddsByMatchSchema(Schema):
     away_team_odds = fields.Nested(OddSchema, many=True, metadata={'description': '#### Away team odds'})
     local_team_odds = fields.Nested(OddSchema, many=True, metadata={'description': '#### Local team odds'})
+    prob_finish_early = fields.Float()
