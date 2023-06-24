@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, session
 from dotenv import load_dotenv
 from database import db
 from flask_smorest import Api
@@ -20,7 +20,8 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id: int):
-        return User.query.get(user_id)
+        user = User.query.get(int(user_id))
+        return user
 
     CORS(app, origins="http://localhost:4200", methods=["GET", "POST", "PUT", "DELETE"], supports_credentials=True)
     app.config.from_object('config.Config')

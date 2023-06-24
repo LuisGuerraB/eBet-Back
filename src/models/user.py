@@ -1,14 +1,13 @@
+import os
 from datetime import datetime
 
 from marshmallow import Schema, fields, validate
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
+from config import Config
 from database import db
 from flask_login import UserMixin, login_user
-
-
-class InvalidCredentialException(Exception):
-    message = "control-error.invalid-credentials"
 
 
 class User(db.Model, UserMixin):
@@ -19,7 +18,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(), nullable=False)
     password = db.Column(db.String(), nullable=False)
     balance = db.Column(db.Integer, default=100, nullable=False)
-    img = db.Column(db.String(), default='assets/img/user.svg', nullable=False)
+    img = db.Column(db.String(), default='assets/users_profile/user.svg', nullable=False)
     last_login = db.Column(db.DateTime, server_default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), nullable=False)
     privileges = db.Column(db.String(3), server_default='', nullable=False)
 
@@ -39,7 +38,7 @@ class User(db.Model, UserMixin):
             login_user(self)
             return self.redeem_prize()
         else:
-            raise InvalidCredentialException()
+            raise Exception("control-error.invalid-credentials")
 
     def redeem_prize(self):
         if (datetime.now() - self.last_login).total_seconds() > 86400:
@@ -62,6 +61,35 @@ class User(db.Model, UserMixin):
                 privileges.append('marketing')
         return privileges
 
+    def update_img(self, img_file):
+        saving_route = os.path.join(Config.UPLOAD_FOLDER, 'users_profile',
+                                    str(self.id) + '_' + secure_filename(img_file.filename))
+        img_file.save(saving_route)
+        old_img = self.img
+        self.img = saving_route
+        db.session().commit()
+        os.remove(old_img)
+        return saving_route
+
+    def update(self, user):
+        user_same_username = User.query.filter_by(username=user['username']).first()
+        if user_same_username is not None:
+            raise Exception('control-error.username-taken')
+        with db.session() as session:
+            self.username = user['username']
+            session.commit()
+
+    def check_attribute(self, attribute, value):
+        if check_password_hash(getattr(self, attribute), value):
+            return True
+        else:
+            return False
+
+    def update_attribute(self, attribute, value):
+        with db.session() as session:
+            setattr(self, attribute, generate_password_hash(value))
+            session.commit()
+
     def __str__(self):
         return f'{self.username} {self.balance} {self.privileges}'
 
@@ -74,6 +102,12 @@ class UserSchema(Schema):
                              metadata={'description': '#### Password of the User'})
     balance = fields.Integer(dump_only=True, metadata={'description': '#### Balance of the User'})
     img = fields.String(metadata={'description': '#### Image of the User'})
+
+
+class SimpleUserSchema(Schema):
+    username = fields.String(required=True, metadata={'description': '#### Username of the User'})
+    balance = fields.Integer(required=True, metadata={'description': '#### Balance of the User'})
+    img = fields.String(required=True, metadata={'description': '#### Image of the User'})
 
 
 class UserLoginSchema(Schema):
@@ -91,3 +125,7 @@ class UserLoginResponseSchema(Schema):
 
 class PrivilegesSchema(Schema):
     privileges = fields.List(fields.String(), required=True, metadata={'description': '#### Privilege of the User'})
+
+
+class ChangeSchema(Schema):
+    field = fields.String(required=True, metadata={'description': '#### Value of the field'})
