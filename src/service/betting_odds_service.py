@@ -1,8 +1,11 @@
-from flask_smorest import Blueprint, abort
-from app import db
-from src.classes import ProbCalculator
+from math import ceil
 
-from src.models import BettingOddsByMatchSchema, Match, BettingOdds
+from flask_smorest import Blueprint, abort
+from sqlalchemy import or_
+
+from app import db
+
+from src.models import BettingOddsByMatchSchema, Match, BettingOdds, Probability
 
 api_url = '/betting_odds'
 api_name = 'BettingOdds'
@@ -23,14 +26,15 @@ def get_betting_ods_from_match(match_id):
         match = session.query(Match).get(match_id)
         if not match:
             abort(404, message='control-error.match-not-found')
-        prob = ProbCalculator(db)
-        prob.create_probabilities_from_team_at_tournament(session, match.local_team_id, match.tournament.league.id)
-        prob.create_probabilities_from_team_at_tournament(session, match.local_team_id)
-        prob.create_probabilities_from_team_at_tournament(session, match.away_team_id, match.tournament.league.id)
-        prob.create_probabilities_from_team_at_tournament(session, match.away_team_id)
+        # This wont be necesarly when autopopulate is up
+        Probability.create_probabilities_from_team_at_league(session, match.local_team_id, match.tournament.league.id)
+        Probability.create_probabilities_from_team_at_league(session, match.local_team_id)
+        Probability.create_probabilities_from_team_at_league(session, match.away_team_id, match.tournament.league.id)
+        Probability.create_probabilities_from_team_at_league(session, match.away_team_id)
+        prob_finish_early = Probability.finish_early_match(session, match)
         try:
             betting_odds_local_team = BettingOdds.create(session, match, match.local_team_id, match.away_team_id)
             betting_odds_away_team = BettingOdds.create(session, match, match.away_team_id, match.local_team_id)
         except Exception as e:
-            abort(404, message='control-error.'+str(e))
-        return {'away_team_odds': betting_odds_away_team.odds, 'local_team_odds': betting_odds_local_team.odds}
+            abort(404, message='control-error.' + str(e))
+        return {'away_team_odds': betting_odds_away_team.odds, 'local_team_odds': betting_odds_local_team.odds, 'prob_finish_early' : prob_finish_early}
