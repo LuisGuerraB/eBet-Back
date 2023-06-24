@@ -1,13 +1,13 @@
-from flask import Flask, session
+from flask import Flask
 from dotenv import load_dotenv
 from database import db
 from flask_smorest import Api
-from flask_mail import Mail
 from flask_cors import CORS
 from flask_login import LoginManager
 
 from flask_swagger_ui import get_swaggerui_blueprint
 
+from src.classes import Scheduler, DbPopulator
 from src.models import User
 from src.service import db_populator_blp, esport_blp, league_blp, match_blp, participation_blp, probability_blp, \
     result_blp, tournament_blp, team_blp, bet_blp, betting_odds_blp, user_blp, prize_blp
@@ -31,6 +31,11 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     api = Api(app)
+
+    scheduler = Scheduler(DbPopulator())
+    scheduler.init_app(app)
+    scheduler.start()
+    scheduler.remove_all_jobs()
 
     url_prefix = '/' + app.config["API_TITLE"] + '/' + app.config["API_VERSION"]
 

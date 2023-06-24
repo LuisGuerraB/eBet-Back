@@ -1,7 +1,7 @@
 from flask_smorest import Blueprint, abort
 from app import db
 
-from src.classes import DbPopulator, MatchPopulateSchema
+from src.classes import DbPopulator, MatchPopulateSchema, Scheduler
 from src.enums import MatchStatus
 from src.models import ProbabilityCreateSchema
 
@@ -21,8 +21,7 @@ db_populator_blp = Blueprint(
 @db_populator_blp.response(204)
 def tournaments(year, month):
     try:
-        populator = DbPopulator(db)
-        populator.populate_tournaments(populator.db.session(), MatchStatus.NOT_STARTED, year, month)
+        DbPopulator().populate_tournaments(MatchStatus.NOT_STARTED, year, month)
     except Exception as e:
         abort(400, message=str(e))
 
@@ -32,8 +31,7 @@ def tournaments(year, month):
 @db_populator_blp.response(204)
 def teams(league_id):
     try:
-        populator = DbPopulator(db)
-        populator.populate_teams(populator.db.session(), league_id)
+        DbPopulator().populate_teams(league_id)
     except Exception as e:
         abort(400, message=str(e))
 
@@ -45,8 +43,8 @@ def teams(league_id):
 @db_populator_blp.response(204)
 def matches(params):
     try:
-        populator = DbPopulator(db)
-        populator.populate_matches(populator.db.session(), params.get('status'), params.get('year'), params.get('month'),
+
+        DbPopulator().populate_matches(params.get('status'), params.get('year'), params.get('month'),
                                    params.get('limit'), params.get('page'))
     except Exception as e:
         abort(400, message=str(e))
@@ -57,8 +55,7 @@ def matches(params):
 @db_populator_blp.response(204)
 def results(match_id, set):
     try:
-        populator = DbPopulator(db)
-        populator.populate_result(populator.db.session(), match_id, set)
+        DbPopulator().populate_result(match_id, set)
     except Exception as e:
         abort(400, message=str(e))
 
@@ -69,8 +66,7 @@ def results(match_id, set):
 def populate():
     """Populate whole database"""
     #try:
-    populator = DbPopulator(db)
-    populator.populate_DB()
+    DbPopulator().populate_DB()
     #except Exception as e:
     #    abort(400, message=str(e))
 
@@ -81,7 +77,14 @@ def populate():
 @db_populator_blp.response(204)
 def populate(params):
     try:
-        populator = DbPopulator(db)
-        populator.populate_probabilites(params.get('team_id'), params.get('league_id', None))
+        DbPopulator().populate_probabilites(params.get('team_id'), params.get('league_id', None))
     except Exception as e:
         abort(400, message=str(e))
+
+
+@db_populator_blp.route(api_url + '/get_jobs', methods=['GET'])
+@db_populator_blp.doc(tags=[api_name])
+@db_populator_blp.response(201)
+def get_jobs():
+    scheduler = Scheduler(DbPopulator())
+    scheduler.get_jobs()

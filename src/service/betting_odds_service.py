@@ -1,7 +1,4 @@
-from math import ceil
-
 from flask_smorest import Blueprint, abort
-from sqlalchemy import or_
 
 from app import db
 

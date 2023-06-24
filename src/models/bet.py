@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from marshmallow import Schema, fields
-from sqlalchemy import or_
 
 from database import db
 from . import Probability

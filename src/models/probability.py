@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields
 from sqlalchemy import or_, desc
 from sqlalchemy.orm import validates
 
@@ -43,40 +43,41 @@ class Probability(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
 
     @classmethod
-    def create_probabilities_from_team_at_league(cls, session, team_id, league_id=None):
+    def create_probabilities_from_team_at_league(cls, team_id, league_id=None):
         # Get match of the team at a league
-        probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
-        if probability is not None and probability.updated:
-            return
-        if league_id:
-            matches = session.query(Match).filter(
-                Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
-                or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).order_by(desc(Match.ini_date)).all()
-        else:
-            matches = session.query(Match).filter(Match.end_date.isnot(None),
-                                                  or_(Match.local_team_id == team_id,
-                                                      Match.away_team_id == team_id)).order_by(
-                desc(Match.ini_date)).all()
-
-        # Get the results of the match an order it by match.ini_date
-        results = session.query(Result).filter(
-            Result.match_id.in_([match.id for match in matches]),
-            Result.team_id == team_id
-        ).join(Result.match).order_by(desc(Match.ini_date)).all()
-        if results:
-            prob_finished_early = ProbUnit.calc_prob(
-                [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
-                 match.sets != 1])
-            if probability is None:
-                probability = Probability(team_id=team_id, league_id=league_id)
-                session.add(probability)
-                probability.update_data(session, results)
-                probability.prob_finish_early = prob_finished_early.get(1)
+        with db.session() as session:
+            probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
+            if probability is not None and probability.updated:
+                return
+            if league_id:
+                matches = session.query(Match).filter(
+                    Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
+                    or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).order_by(desc(Match.ini_date)).all()
             else:
-                probability.prob_finish_early = prob_finished_early.get(1)
-                probability.update_data(session, results)
-            probability.updated = True
-            session.commit()
+                matches = session.query(Match).filter(Match.end_date.isnot(None),
+                                                      or_(Match.local_team_id == team_id,
+                                                          Match.away_team_id == team_id))\
+                                               .order_by(desc(Match.ini_date)).all()
+
+            # Get the results of the match an order it by match.ini_date
+            results = session.query(Result).filter(
+                Result.match_id.in_([match.id for match in matches]),
+                Result.team_id == team_id
+            ).join(Result.match).order_by(desc(Match.ini_date)).all()
+            if results:
+                prob_finished_early = ProbUnit.calc_prob(
+                    [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
+                     match.sets != 1])
+                if probability is None:
+                    probability = Probability(team_id=team_id, league_id=league_id)
+                    session.add(probability)
+                    probability.update_data(session, results)
+                    probability.prob_finish_early = prob_finished_early.get(1)
+                else:
+                    probability.prob_finish_early = prob_finished_early.get(1)
+                    probability.update_data(session, results)
+                probability.updated = True
+                session.commit()
 
     def update_data(self, session, results):
         grouped_stats = defaultdict(list)
