@@ -1,5 +1,3 @@
-import smtplib
-
 from flask import request, current_app
 from flask_login import login_required, current_user
 from flask_mail import Mail, Message
@@ -7,7 +5,9 @@ from flask_smorest import Blueprint, abort
 
 from database import db
 from src.enums import Privilege
-from src.models.prize import PrizeSchema, Prize, PrizeListSchema, EmailSchema
+from src.models.prize import EmailSchema
+from src.enums import allowed_file
+from src.models.prize import PrizeSchema, Prize, PrizeListSchema
 
 api_url = '/prize'
 api_name = 'Prize'
@@ -29,6 +29,8 @@ def create_prize(params):
     if current_user.has_privilege(Privilege.MARKETING):
         if not request.files.get('img'):
             abort(404, message='control-error.no-img')
+        if not allowed_file(request.files.get('img').filename):
+            abort(404, message='control-error.invalid-img')
         if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
             return
         else:

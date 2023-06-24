@@ -1,5 +1,4 @@
 import os
-from flask_smorest.fields import Upload
 
 from marshmallow import Schema, fields, validate
 from werkzeug.utils import secure_filename
@@ -18,7 +17,7 @@ class Prize(db.Model):
 
     @classmethod
     def create_prize(cls, amount, img, price):
-        saving_route = os.path.join(Config.UPLOAD_FOLDER, 'images', secure_filename(img.filename))
+        saving_route = os.path.join(Config.UPLOAD_FOLDER,'prizes', secure_filename(img.filename))
         img.save(saving_route)
 
         prize = Prize(amount=amount, img=saving_route, price=price)
@@ -51,6 +50,9 @@ class PrizeSchema(Schema):
                            metadata={'description': '#### Price of the Prize'})
     img = fields.String(required=True, dump_only=True, metadata={'description': '#### Image of the Prize'})
 
+
+class FileSchema(Schema):
+    img = fields.String(required=False)
 
 class EmailSchema(Schema):
     email = fields.Email(required=False)
