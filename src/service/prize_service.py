@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from flask_smorest import Blueprint, abort
 
 from database import db
+from src.enums import allowed_file
 from src.models.prize import PrizeSchema, Prize, PrizeListSchema
 
 api_url = '/prize'
@@ -25,6 +26,8 @@ def create_prize(params):
     if current_user.has_privilege('marketing'):
         if not request.files.get('img'):
             abort(404, message='control-error.no-img')
+        if not allowed_file(request.files.get('img').filename):
+            abort(404, message='control-error.invalid-img')
         if Prize.create_prize(params['amount'], request.files.get('img'), params['price']):
             return
         else:

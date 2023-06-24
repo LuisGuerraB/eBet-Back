@@ -18,7 +18,7 @@ class Prize(db.Model):
 
     @classmethod
     def create_prize(cls, amount, img, price):
-        saving_route = os.path.join(Config.UPLOAD_FOLDER,'images', secure_filename(img.filename))
+        saving_route = os.path.join(Config.UPLOAD_FOLDER,'prizes', secure_filename(img.filename))
         img.save(saving_route)
 
         prize = Prize(amount=amount, img=saving_route, price=price)
@@ -47,7 +47,7 @@ class PrizeSchema(Schema):
 
 
 class FileSchema(Schema):
-    img = Upload(required=False)
+    img = fields.String(required=False)
 
 class PrizeListSchema(Schema):
     items = fields.List(fields.Nested(PrizeSchema), dump_only=True, required=True,

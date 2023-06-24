@@ -5,6 +5,7 @@ class MatchStatus(Enum):
     NOT_STARTED = 'not_started'
     FINISHED = 'finished'
 
+
 class BetType(Enum):
     WIN = 'win'
     EXP = 'exp'
@@ -18,3 +19,9 @@ class BetType(Enum):
     KILLS = 'kills'
     DEATHS = 'deaths'
     ASSISTS = 'assists'
+
+
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'svg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
