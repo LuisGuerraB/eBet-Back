@@ -1,5 +1,4 @@
 import os
-from flask_smorest.fields import Upload
 
 from marshmallow import Schema, fields, validate
 from werkzeug.utils import secure_filename
@@ -27,7 +26,7 @@ class Prize(db.Model):
             session.commit()
             return True
 
-    def delete(self,session):
+    def delete(self, session):
         try:
             os.remove(self.img)
             session.delete(self)
@@ -35,6 +34,12 @@ class Prize(db.Model):
             return True
         except:
             return False
+
+    def buy(self, session):
+        self.amount -= 1
+        if self.amount == 0:
+            self.delete(session)
+        session.commit()
 
 
 class PrizeSchema(Schema):
@@ -49,8 +54,11 @@ class PrizeSchema(Schema):
 class FileSchema(Schema):
     img = fields.String(required=False)
 
+class EmailSchema(Schema):
+    email = fields.Email(required=False)
+
+
 class PrizeListSchema(Schema):
     items = fields.List(fields.Nested(PrizeSchema), dump_only=True, required=True,
                         metadata={'description': '#### List of Prize'})
     total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of prizes'})
-

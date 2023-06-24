@@ -9,7 +9,7 @@ from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema, BetListSchema
 from .betting_odds import BettingOdds, BettingOddsByMatchSchema
 from .user import User, ChangeSchema, UserSchema, UserLoginSchema, UserLoginResponseSchema, PrivilegesSchema, SimpleUserSchema
-from .prize import Prize, PrizeSchema, PrizeListSchema
+from .prize import Prize, PrizeSchema, PrizeListSchema, EmailSchema
 
 __all__ = [
     'Esport',
@@ -34,6 +34,7 @@ __all__ = [
     'ProbabilitySchema',
     'ProbabilityCreateSchema',
     'Prize',
+    'EmailSchema',
     'PrizeSchema',
     'PrizeListSchema',
     'Bet',

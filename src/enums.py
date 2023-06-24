@@ -6,6 +6,10 @@ class MatchStatus(Enum):
     FINISHED = 'finished'
 
 
+class Privilege(Enum):
+    MARKETING = 'marketing'
+    ADMIN = 'admin'
+
 class BetType(Enum):
     WIN = 'win'
     EXP = 'exp'
