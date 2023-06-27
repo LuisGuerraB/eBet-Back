@@ -2,3 +2,4 @@ config/
 config.py
 .env
 static/
+container/db-docker/db-local.env
