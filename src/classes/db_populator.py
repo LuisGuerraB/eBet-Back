@@ -1,9 +1,10 @@
 from marshmallow.schema import Schema
 from marshmallow import fields, validate
 
+from database import db
 from src.enums import MatchStatus
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Tournament, League, Result, Team, Participation, Probability
+from src.models import Match, Tournament, League, Result, Team, Participation, Probability, Play
 import datetime
 
 
@@ -18,13 +19,32 @@ class DbPopulator:
         actual_month = today.month
         limit = 500
         total_matches_with_results = []
-        with self.db.session() as session:
+        with db.session(expire_on_commit=False) as session:
             # Fill the DB with matchs that have not yet occured
+            # for month in range(actual_month, 13):
+            #    print('populate future matches')
+            #    self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
+
+            # Fill the DB with matchs that have finished
+            for month in range(actual_month + 1, 4, -1):
+                print('populate previous matches')
+                matches_finished_list = self.populate_matches(session, MatchStatus.FINISHED, year=year, month=month,
+                                                              limit=limit)
+                total_matches_with_results += matches_finished_list
+
+            # Fill the DB with the results of finished matches
+            for match in total_matches_with_results:
+                match.update_result()
+                sets = match.final_set if match.final_set is not None else match.sets
+                for set in range(sets):
+                    for play in match.plays:
+                        result = session.query(Result).filter_by(play_id=play.id, set=set + 1).first()
+                        if result is None:
+                            self.populate_result(session, match.id, set + 1, )
 
             # Fill the DB with the probabilities of teams in general
-            teams = session.query(Team).all()
+            teams = Team.query.all()
             for team in teams:
-                print('populate')
                 Probability.create_probabilities_from_team_at_league(session, team.id)
 
     def populate_probabilites(self, team_id, league_id=None):
@@ -52,13 +72,15 @@ class DbPopulator:
                     name=match_json['name'],
                     sets=match_json['numberOfGames'],
                     plan_date=match_json['scheduledAt'],
-                    away_team_id=match_json['awayTeamId'],
-                    local_team_id=match_json['homeTeamId'],
                     tournament_id=match_json['tournamentId'],
                     ini_date=match_json['beginAt'],
                     end_date=match_json['endAt']
                 )
                 session.add(match_obj)
+                play_local = Play(team_id=match_json['homeTeamId'], match_id=match_obj.id, local=True)
+                play_away = Play(team_id=match_json['awayTeamId'], match_id=match_obj.id, local=False)
+                session.add(play_local)
+                session.add(play_away)
             match_obj.ini_date = match_json['beginAt']
             match_obj.end_date = match_json['endAt']
             match_list_result.append(match_obj)
@@ -95,10 +117,10 @@ class DbPopulator:
         result_json = ApiScrapper.get_match_result(match_id, set)
         if result_json:
             if session.get(Match, match_id) is None:  # If doesn't exist match at DB
-                self.populate_matches(MatchStatus.FINISHED, year=int(result_json['beginAt'][:4]),
+                self.populate_matches(session, MatchStatus.FINISHED, year=int(result_json['beginAt'][:4]),
                                       month=int(result_json['beginAt'][5:7]), limit=100)
             match_obj = session.get(Match, match_id)
-            for result_obj in match_obj.results:
+            for result_obj in [play.result for play in match_obj.plays if play.result is not None]:
                 if result_obj.set == set:
                     load = False
             if load:
@@ -133,7 +155,8 @@ class DbPopulator:
     def populate_participations(self, session, team, position, points, tournament_id):
         participation = session.query(Participation).filter_by(team_id=team.id, tournament_id=tournament_id).first()
         if participation is None:
-            participation = Participation(team_id=team.id, tournament_id=tournament_id, position=position, points=points)
+            participation = Participation(team_id=team.id, tournament_id=tournament_id, position=position,
+                                          points=points)
             session.add(participation)
         participation.position = position
         participation.points = points

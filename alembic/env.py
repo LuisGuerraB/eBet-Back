@@ -7,7 +7,7 @@ from database import db
 from alembic import context
 
 from flask_sqlalchemy import SQLAlchemy
-from src.models import League, Esport, Tournament, Participation, Team, Match, Result, Bet, BettingOdds, User, Prize
+from src.models import League, Esport, Tournament, Participation, Team, Match, Result, Bet, BettingOdds, User, Prize ,Play
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
