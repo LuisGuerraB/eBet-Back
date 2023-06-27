@@ -2,7 +2,7 @@ from .esport import Esport, EsportSchema
 from .league import League, LeagueSchema, LeagueListSchema
 from .match import Match, MatchSchema, MatchListArgumentSchema, MatchListSchema
 from .participation import Participation, ParticipationSchema, ParticipationListSchema
-from .result import Result, ResultSchema
+from .result import Result, ResultSchema, Stat
 from .tournament import Tournament, TournamentSchema
 from .team import Team, TeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
@@ -25,6 +25,7 @@ __all__ = [
     'ParticipationSchema',
     'ParticipationListSchema',
     'Result',
+    'Stat',
     'ResultSchema',
     'Tournament',
     'TournamentSchema',

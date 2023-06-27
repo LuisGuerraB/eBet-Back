@@ -3,7 +3,8 @@ from datetime import datetime
 from marshmallow import Schema, fields
 
 from database import db
-from . import Probability
+from . import Probability, Result, Stat
+from .user import User
 from .match import Match, MatchSchema
 from .betting_odds import BettingOdds
 
@@ -84,6 +85,25 @@ class Bet(db.Model):
         user.balance -= amount_difference
         self.amount = new_amount
         session.commit()
+
+    def resolve(self, session):
+        stat = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
+            Stat.type == self.type,
+            Result.team_id == self.team_id,
+            Result.match_id == self.match_id,
+            Result.set == self.set,
+        ).first()
+        match = session.query(Match).get(self.match_id)
+        user = session.query(User).get(self.user_id)
+        if stat.value >= self.subtype and match.ini_date > self.date:
+            user.balance += self.amount * self.multiplier
+            self.result = '+' + str(self.amount * self.multiplier)
+        else:
+            self.result = '-' + str(self.amount)
+        session.commit()
+
+    def __repr__(self):
+        return f'<Bet : {self.id} - {self.type} - {self.subtype} - {self.amount}>'
 
 
 class BetSchema(Schema):

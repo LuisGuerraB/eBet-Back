@@ -3,7 +3,7 @@ from app import db
 
 from src.classes import DbPopulator, MatchPopulateSchema, Scheduler
 from src.enums import MatchStatus
-from src.models import ProbabilityCreateSchema
+from src.models import ProbabilityCreateSchema, Bet
 
 api_url = '/populator'
 api_name = 'Populator'

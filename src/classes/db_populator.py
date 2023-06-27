@@ -7,7 +7,7 @@ from database import db
 from .scheduler import Scheduler
 from src.enums import MatchStatus
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Tournament, League, Result, Team, Participation, Probability
+from src.models import Match, Tournament, League, Result, Team, Participation, Probability, Bet
 import datetime
 
 
@@ -29,7 +29,7 @@ class DbPopulator:
             # Fill the DB with matchs that have finished
             for month in range(actual_month + 1, 1, -1):
                 matches_finished_list = cls.populate_matches(MatchStatus.FINISHED, year=year, month=month,
-                                                              limit=limit, session=session)
+                                                             limit=limit, session=session)
                 total_matches_with_results += matches_finished_list
 
             # Fill the DB with the results of finished matches
@@ -39,7 +39,7 @@ class DbPopulator:
                 for set in range(sets):
                     result = session.query(Result).filter_by(match_id=match.id, set=set + 1).first()
                     if result is None:
-                        cls.populate_result(match.id, set + 1,session=session)
+                        cls.populate_result(match.id, set + 1, session=session)
 
             # Fill the DB with the probabilities of teams in general
             teams = Team.query.all()
@@ -126,10 +126,8 @@ class DbPopulator:
             session = db.session()
 
         load = True
-        saved = False
         result_json = ApiScrapper.get_match_result(match_id, set)
         if result_json:
-            saved = True
             if session.get(Match, match_id) is None:  # If doesn't exist match at DB
                 cls.populate_matches(MatchStatus.FINISHED, year=int(result_json['beginAt'][:4]),
                                      month=int(result_json['beginAt'][5:7]), limit=100)
@@ -143,7 +141,7 @@ class DbPopulator:
         if match_obj.end_date is not None:
             match_obj.update_result()
         session.commit()
-        return saved
+        return
 
     @classmethod
     def populate_teams(cls, league_id, session=None):
@@ -187,8 +185,7 @@ class DbPopulator:
             session.commit()
 
     @classmethod
-    def update_data_from_match(cls, match_id, session):
-        match = Match.query.get(match_id)
+    def update_data_from_match(cls, match, session):
         league_id_of_match = match.tournament.league_id
         cls.populate_teams(league_id_of_match, session=session)
         probabilities = Probability.query.filter(
@@ -201,6 +198,12 @@ class DbPopulator:
         cls.populate_probabilites(match.local_team_id, league_id_of_match, session=session)
         cls.populate_probabilites(match.away_team_id, session=session)
         cls.populate_probabilites(match.local_team_id, session=session)
+
+    @classmethod
+    def resolve_bets(cls, match, session):
+        bets = session.query(Bet).filter_by(match_id=match.id).all()
+        for bet in bets:
+            bet.resolve(session)
 
 
 class MatchPopulateSchema(Schema):

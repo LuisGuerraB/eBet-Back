@@ -5,6 +5,7 @@ from flask_apscheduler import APScheduler
 
 from database import db
 from src.enums import MatchStatus
+from src.models import Match
 
 
 class Scheduler:
@@ -47,24 +48,25 @@ class Scheduler:
                                 run_date=start_date, id=f'generate_{match_id}', replace_existing=True)
 
     def wake_up_result_scrapping(self, match_id, sets):
-        for set in range(1, sets):
+        for set in range(1, sets + 1):
             self._scheduler.add_job(id=f'update_{match_id}_{set}', func=lambda: self.update_result(match_id, set),
-                                    trigger='interval', seconds=15)
-        self._scheduler.add_job(id=f'update_{match_id}_{sets}', func=lambda: self.update_result_last(match_id, sets),
-                                trigger='interval', seconds=15)
+                                    trigger='interval', minutes=3)
 
     def update_result(self, match_id, set):
         with self._scheduler.app.app_context():
-            saved = self.db_populator.populate_result(match_id, set, session=db.session())
-            if saved:
+            self.db_populator.populate_result(match_id, set, session=db.session())
+            match = Match.query.get(match_id)
+            if match.end_date is not None:
                 self._scheduler.remove_job(f'update_{match_id}_{set}')
+                self.db_populator.update_data_from_match(match, session=db.session())
+                self.db_populator.resolve_bets(match, session=db.session(expire_on_commit=False))
+
 
     def update_result_last(self, match_id, last_set):
         with self._scheduler.app.app_context():
             saved = self.db_populator.populate_result(match_id, last_set, session=db.session())
             if saved:
                 self._scheduler.remove_job(f'update_{match_id}_{last_set}')
-                self.db_populator.update_data_from_match(match_id, session=db.session())
 
     def populate_matches(self):
         with self._scheduler.app.app_context():
