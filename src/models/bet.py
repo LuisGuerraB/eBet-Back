@@ -6,7 +6,7 @@ from database import db
 from .probability import Probability
 from .play import Play
 from .match import PlayMatchSchema
-from .betting_odds import BettingOdds
+from .betting_odd import BettingOdd
 
 
 class Bet(db.Model):
@@ -39,7 +39,7 @@ class Bet(db.Model):
             raise Exception("existing-bet")
         with db.session() as session:
             play = session.query(Play).filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
-            betting_odd = BettingOdds.query.filter_by(match_id=play.match_id, team_id=play.team_id).first()
+            betting_odd = BettingOdd.query.filter_by(play_id=play.id).first()
             if betting_odd is None:
                 raise Exception("betting-odds-not-found")
 

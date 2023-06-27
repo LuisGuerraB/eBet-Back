@@ -21,9 +21,9 @@ class DbPopulator:
         total_matches_with_results = []
         with db.session(expire_on_commit=False) as session:
             # Fill the DB with matchs that have not yet occured
-            # for month in range(actual_month, 13):
-            #    print('populate future matches')
-            #    self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
+            for month in range(actual_month, 13):
+                print('populate future matches')
+                self.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
 
             # Fill the DB with matchs that have finished
             for month in range(actual_month + 1, 4, -1):

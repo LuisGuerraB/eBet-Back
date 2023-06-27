@@ -7,7 +7,7 @@ from .tournament import Tournament, TournamentSchema
 from .team import Team, TeamSchema, PlayTeamSchema
 from .probability import Probability, ProbabilitySchema, ProbabilityCreateSchema
 from .bet import Bet, BetSchema, BetListSchema
-from .betting_odds import BettingOdds, BettingOddsByMatchSchema
+from .betting_odd import BettingOdd, BettingOddsByMatchSchema
 from .user import User, ChangeSchema, UserSchema, UserLoginSchema, UserLoginResponseSchema, PrivilegesSchema, \
     SimpleUserSchema
 from .prize import Prize, PrizeSchema, PrizeListSchema, EmailSchema
@@ -45,7 +45,7 @@ __all__ = [
     'Bet',
     'BetSchema',
     'BetListSchema',
-    'BettingOdds',
+    'BettingOdd',
     'BettingOddsByMatchSchema',
     'User',
     'ChangeSchema',

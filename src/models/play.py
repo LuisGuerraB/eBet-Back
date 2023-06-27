@@ -16,5 +16,4 @@ class Play(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='plays')
     result: db.Mapped['Result'] = db.relationship('Result', back_populates='match')
     bets: db.Mapped['Bet'] = db.relationship('Bet', back_populates='play')
-
-
+    betting_odd: db.Mapped['BettingOdd'] = db.relationship('BettingOdd', back_populates='play')
