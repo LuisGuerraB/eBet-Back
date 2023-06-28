@@ -24,4 +24,4 @@ services:
       POSTGRES_DB : ${PGSQL_DATABASE_NAME}
     volumes:
       - ${PGSQL_VOLUME}:/var/lib/postgresql/data
-    command: -p 30889
+    command: -p ${PGSQL_PORT}
