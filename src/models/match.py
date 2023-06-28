@@ -4,7 +4,7 @@ from operator import or_
 from marshmallow import Schema, fields, validate
 
 from database import db
-from .team import TeamSchema
+from .team import PlayTeamSchema
 from .tournament import TournamentSchema, Tournament
 
 
@@ -18,16 +18,11 @@ class Match(db.Model):
     plan_date = db.Column(db.DateTime, nullable=False)
     ini_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-    away_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    local_team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
     tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'), nullable=False)
     result = db.Column(db.JSON(), nullable=True)
 
-    away_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[away_team_id])
-    local_team: db.Mapped['Team'] = db.relationship('Team', back_populates='matches', foreign_keys=[local_team_id])
+    plays: db.Mapped[list['Play']] = db.relationship('Play', back_populates='match')
     tournament: db.Mapped['Tournament'] = db.relationship('Tournament', back_populates='matches')
-    results: db.Mapped[list['Result']] = db.relationship('Result', back_populates='match')
-    bets: db.Mapped[list['Bet']] = db.relationship('Bet', back_populates='match')
 
     @classmethod
     def get_list(cls, league_id=None, finished=None, year=None, month=None, page=1, limit=10):
@@ -53,11 +48,13 @@ class Match(db.Model):
 
     def update_result(self):
         match_res = {}
-        results = self.results
+        results = [play.result for play in self.plays if play.result is not None]
+        if len(results) == 0:
+            return
         for result in results:
             win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
             if win_stat is not None:
-                match_res[result.team.acronym] = match_res.get(result.team.acronym, 0) + win_stat
+                match_res[result.team.acronym] = win_stat
         self.result = match_res
         self.final_set = len(results) // 2
 
@@ -69,9 +66,10 @@ class MatchSchema(Schema):
     plan_date = fields.DateTime(required=True, metadata={'description': '#### Planned date of the Match'})
     ini_date = fields.DateTime(metadata={'description': '#### Iniciation date of the Match'})
     end_date = fields.DateTime(metadata={'description': '#### End date of the Match'})
-    away_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Away team of the Match'})
-    local_team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### Local team of the Match'})
-    tournament = fields.Nested(TournamentSchema, required=True, metadata={'description': '#### Tournament of the Match'})
+    teams = fields.List(fields.Nested(PlayTeamSchema), dump_only=True, required=True,
+                        metadata={'description': '#### List of Plays'})
+    tournament = fields.Nested(TournamentSchema, required=True,
+                               metadata={'description': '#### Tournament of the Match'})
     result = fields.Dict(keys=fields.String(required=True), values=fields.Integer(required=True), required=False)
 
 
@@ -89,3 +87,6 @@ class MatchListSchema(Schema):
     items = fields.List(fields.Nested(MatchSchema), dump_only=True, required=True,
                         metadata={'description': '#### List of Matches'})
     total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of matches'})
+
+class PlayMatchSchema(Schema):
+    match = fields.Nested(MatchSchema, required=True, metadata={'description': '#### MatchId of the Match'})

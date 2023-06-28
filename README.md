@@ -1,6 +1,18 @@
 # eBet-Back
 TFG-BackEnd
 
+# Running the app
+
+First, take both db-local-template and template.env and create two new files with 
+the same name, but without the "template".
+
+Next substitute dummy data with the corresponding passwords and username
+
+Lastly, run the deploy command:
+```
+docker-compose -f db.docker-compose.yml --env-file db-local.env up -d
+```
+
 
 # Exporting DB models
 First install sqlacodegen
