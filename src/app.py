@@ -1,8 +1,7 @@
-from flask import Flask, session
+from flask import Flask
 from dotenv import load_dotenv
 from database import db
 from flask_smorest import Api
-from flask_mail import Mail
 from flask_cors import CORS
 from flask_login import LoginManager
 
@@ -64,7 +63,3 @@ def create_app():
 
     return app
 
-
-if __name__ == '__main__':
-    app = create_app()
-    app.run(host=None, port=5000, debug=True)
