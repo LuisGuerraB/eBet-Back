@@ -2,7 +2,7 @@ from flask_smorest import Blueprint, abort
 
 from database import db
 
-from src.models import BettingOddsByMatchSchema, Match, BettingOdds, Probability
+from src.models import BettingOddsByMatchSchema, Match, BettingOdd, Probability
 
 api_url = '/betting_odds'
 api_name = 'BettingOdds'
@@ -23,15 +23,20 @@ def get_betting_ods_from_match(match_id):
         match = session.query(Match).get(match_id)
         if not match:
             abort(404, message='control-error.match-not-found')
+        for play in match.plays:
+            if play.local:
+                local_team_id = play.team_id
+            else:
+                away_team_id = play.team_id
         # This wont be necesarly when autopopulate is up
-        Probability.create_probabilities_from_team_at_league(session, match.local_team_id, match.tournament.league.id)
-        Probability.create_probabilities_from_team_at_league(session, match.local_team_id)
-        Probability.create_probabilities_from_team_at_league(session, match.away_team_id, match.tournament.league.id)
-        Probability.create_probabilities_from_team_at_league(session, match.away_team_id)
+        Probability.create_probabilities_from_team_at_league(session, local_team_id, match.tournament.league.id)
+        Probability.create_probabilities_from_team_at_league(session, local_team_id)
+        Probability.create_probabilities_from_team_at_league(session, away_team_id, match.tournament.league.id)
+        Probability.create_probabilities_from_team_at_league(session, away_team_id)
         prob_finish_early = Probability.finish_early_match(session, match)
-        try:
-            betting_odds_local_team = BettingOdds.create(session, match, match.local_team_id, match.away_team_id)
-            betting_odds_away_team = BettingOdds.create(session, match, match.away_team_id, match.local_team_id)
-        except Exception as e:
-            abort(404, message='control-error.' + str(e))
+        #try:
+        betting_odds_local_team = BettingOdd.create(session, match, local_team_id, away_team_id)
+        betting_odds_away_team = BettingOdd.create(session, match, away_team_id, local_team_id)
+        #except Exception as e:
+        #    abort(404, message='control-error.' + str(e))
         return {'away_team_odds': betting_odds_away_team.odds, 'local_team_odds': betting_odds_local_team.odds, 'prob_finish_early' : prob_finish_early}

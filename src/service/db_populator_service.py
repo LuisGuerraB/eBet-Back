@@ -58,7 +58,7 @@ def matches(params):
 def results(match_id, set):
     try:
         populator = DbPopulator(db)
-        populator.populate_result(populator.db.session(), match_id, set)
+        populator.populate_result(populator.db.session(expire_on_commit=False), match_id, set)
     except Exception as e:
         abort(400, message=str(e))
 

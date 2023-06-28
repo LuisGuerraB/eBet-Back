@@ -97,7 +97,7 @@ class Probability(db.Model):
     @classmethod
     def finish_early_match(self, session, match):
         probabilities = session.query(Probability).filter(
-            or_(Probability.team_id == match.local_team_id, Probability.team_id == match.away_team_id))
+            Probability.team_id.in_([play.team_id for play in match.plays])).all()
         prob_finish_early_array = [prob.prob_finish_early for prob in probabilities]
         prob_finish_early = sum(prob_finish_early_array) / len(prob_finish_early_array)
         return prob_finish_early
