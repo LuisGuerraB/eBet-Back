@@ -54,7 +54,7 @@ class Match(db.Model):
         for result in results:
             win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
             if win_stat is not None:
-                match_res[result.team.acronym] = win_stat
+                match_res[result.play.team.acronym] = win_stat
         self.result = match_res
         self.final_set = len(results) // 2
 

@@ -36,8 +36,10 @@ class Scheduler:
 
     def get_jobs(self):
         jobs = self._scheduler.get_jobs()
+        res = []
         for i in jobs:
-            print(i)
+            res.append(str(i))
+        return res
 
     def schedule_repopulate_matches(self):
         trigger = CronTrigger(day_of_week='sun', hour=0, minute=0)
@@ -58,7 +60,7 @@ class Scheduler:
             match = Match.query.get(match_id)
             if match.end_date is not None:
                 self._scheduler.remove_job(f'update_{match_id}_{set}')
-                self.db_populator.update_data_from_match(match, session=db.session())
+                self.db_populator.update_data_from_match(match, session=db.session(expire_on_commit=False))
                 self.db_populator.resolve_bets(match, session=db.session(expire_on_commit=False))
 
 

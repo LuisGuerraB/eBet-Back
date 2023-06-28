@@ -84,7 +84,8 @@ def populate(params):
 
 @db_populator_blp.route(api_url + '/get_jobs', methods=['GET'])
 @db_populator_blp.doc(tags=[api_name])
-@db_populator_blp.response(201)
+@db_populator_blp.response(200)
 def get_jobs():
     scheduler = Scheduler(DbPopulator())
     scheduler.get_jobs()
+    return scheduler.get_jobs()

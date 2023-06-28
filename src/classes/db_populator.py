@@ -6,7 +6,7 @@ from database import db
 from .scheduler import Scheduler
 from src.enums import MatchStatus
 from src.classes.api_scrapper import ApiScrapper
-from src.models import Match, Tournament, League, Result, Team, Participation, Probability
+from src.models import Match, Tournament, League, Result, Team, Participation, Probability, Play, Bet
 import datetime
 
 
@@ -23,7 +23,7 @@ class DbPopulator:
         with db.session(expire_on_commit=False) as session:
             # Fill the DB with matchs that have not yet occured
             for month in range(actual_month, 13):
-                cls.populate_matches(session, MatchStatus.NOT_STARTED, year=year, month=month, limit=limit)
+                cls.populate_matches( MatchStatus.NOT_STARTED, year=year, month=month, limit=limit,session=session)
 
             # Fill the DB with matchs that have finished
             for month in range(actual_month + 1, 1, -1):
@@ -41,17 +41,18 @@ class DbPopulator:
                         if result is None:
                             cls.populate_result(match.id, set + 1, session=session)
 
+            leagues = League.query.all()
+            for league in leagues:
+                cls.populate_teams(league.id,session)
+
             # Fill the DB with the probabilities of teams in general
             teams = Team.query.all()
             for team in teams:
                 Probability.create_probabilities_from_team_at_league(team.id)
 
     @classmethod
-    @classmethod
-    def populate_probabilites(cls, team_id, league_id=None, session=None):
-        if session is None:
-            session = db.session()
-        Probability.create_probabilities_from_team_at_league(session, team_id, league_id)
+    def populate_probabilites(cls, team_id, league_id=None):
+        Probability.create_probabilities_from_team_at_league( team_id, league_id)
 
     @classmethod
     def populate_matches(cls, status, year=None, month=None, leagueId=None, limit=5, page=0, session=None):
@@ -85,11 +86,12 @@ class DbPopulator:
                     ini_date=match_json['beginAt'],
                     end_date=match_json['endAt']
                 )
-                session.add(match_obj)
-                play_local = Play(team_id=match_json['homeTeamId'], match_id=match_obj.id, local=True)
-                play_away = Play(team_id=match_json['awayTeamId'], match_id=match_obj.id, local=False)
-                session.add(play_local)
-                session.add(play_away)
+                if session.get(Team,match_json['homeTeamId']) is not None and session.get(Team,match_json['awayTeamId']) is not None:
+                    play_local = Play(team_id=match_json['homeTeamId'], match_id=match_obj.id, local=True)
+                    play_away = Play(team_id=match_json['awayTeamId'], match_id=match_obj.id, local=False)
+                    session.add(match_obj)
+                    session.add(play_local)
+                    session.add(play_away)
             match_obj.ini_date = match_json['beginAt']
             match_obj.end_date = match_json['endAt']
             match_list_result.append(match_obj)
@@ -193,10 +195,10 @@ class DbPopulator:
         ).all()
         for prob in probabilities:
             prob.updated = False
-        cls.populate_probabilites(match.away_team_id, league_id_of_match, session=session)
-        cls.populate_probabilites(match.local_team_id, league_id_of_match, session=session)
-        cls.populate_probabilites(match.away_team_id, session=session)
-        cls.populate_probabilites(match.local_team_id, session=session)
+        cls.populate_probabilites(match.away_team_id, league_id_of_match)
+        cls.populate_probabilites(match.local_team_id, league_id_of_match)
+        cls.populate_probabilites(match.away_team_id)
+        cls.populate_probabilites(match.local_team_id)
 
     @classmethod
     def resolve_bets(cls, match, session):
