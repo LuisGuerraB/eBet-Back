@@ -63,13 +63,6 @@ class Scheduler:
                 self.db_populator.update_data_from_match(match, session=db.session(expire_on_commit=False))
                 self.db_populator.resolve_bets(match, session=db.session(expire_on_commit=False))
 
-
-    def update_result_last(self, match_id, last_set):
-        with self._scheduler.app.app_context():
-            saved = self.db_populator.populate_result(match_id, last_set, session=db.session())
-            if saved:
-                self._scheduler.remove_job(f'update_{match_id}_{last_set}')
-
     def populate_matches(self):
         with self._scheduler.app.app_context():
             today = datetime.today()
