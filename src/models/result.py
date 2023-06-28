@@ -28,7 +28,7 @@ class Result(db.Model):
     play_id = db.Column(db.Integer, db.ForeignKey('play.id'), nullable=False)
     set = db.Column(db.Integer, nullable=False)
 
-    match: db.Mapped['Play'] = db.relationship('Play', back_populates='result')
+    play: db.Mapped['Play'] = db.relationship('Play', back_populates='result')
 
     @classmethod
     def create_from_web_json(cls, session, json, match_id, set):

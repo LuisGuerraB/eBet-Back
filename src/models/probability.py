@@ -1,11 +1,12 @@
 from collections import defaultdict
 
-from marshmallow import Schema, fields, validate
-from sqlalchemy import or_, desc
+from marshmallow import Schema, fields
+from sqlalchemy import  desc
 from sqlalchemy.orm import validates
 
 from database import db
-from src.models import Match, Result
+from src.models import Match
+from .play import Play
 
 
 def calc_len_min(prob_ini, jump):
@@ -43,33 +44,34 @@ class Probability(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
 
     @classmethod
-    def create_probabilities_from_team_at_league(cls, session, team_id, league_id=None):
+    def create_probabilities_from_team_at_league(cls, team_id, league_id=None ,session = None):
         # Get match of the team at a league
+        if session is None:
+            session = db.session(expire_on_commit=False)
+
         probability = session.query(Probability).filter_by(team_id=team_id, league_id=league_id).first()
         if probability is not None and probability.updated:
             return
         if league_id:
-            matches = session.query(Match).filter(
-                Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
-                or_(Match.local_team_id == team_id, Match.away_team_id == team_id)).order_by(desc(Match.ini_date)).all()
+            plays = session.query(Play).join(Match, Play.match_id == Match.id).filter(
+                Play.team_id == team_id, Match.tournament.has(league_id=league_id), Match.end_date.isnot(None),
+            ).order_by(desc(Match.ini_date)).all()
         else:
-            matches = session.query(Match).filter(Match.end_date.isnot(None),
-                                                  or_(Match.local_team_id == team_id,
-                                                      Match.away_team_id == team_id)).order_by(
-                desc(Match.ini_date)).all()
+            plays = session.query(Play).join(Match, Play.match_id == Match.id).filter(
+                Play.team_id == team_id, Match.end_date.isnot(None),
+            ).order_by(desc(Match.ini_date)).all()
 
         # Get the results of the match an order it by match.ini_date
-        results = session.query(Result).filter(
-            Result.match_id.in_([match.id for match in matches]),
-            Result.team_id == team_id
-        ).join(Result.match).order_by(desc(Match.ini_date)).all()
-        if results:
+        results = [play.result for play in plays if play.result is not None]
+        matches = [play.match for play in plays if play.match is not None]
+        if len(results) != 0:
             prob_finished_early = ProbUnit.calc_prob(
                 [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
                  match.sets != 1])
             if probability is None:
                 probability = Probability(team_id=team_id, league_id=league_id)
                 session.add(probability)
+                session.commit()
                 probability.update_data(session, results)
                 probability.prob_finish_early = prob_finished_early.get(1)
             else:
