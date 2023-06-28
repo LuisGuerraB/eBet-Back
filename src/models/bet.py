@@ -3,10 +3,12 @@ from datetime import datetime
 from marshmallow import Schema, fields
 
 from database import db
+from .play import Play
+from .match import PlayMatchSchema
+from .betting_odd import BettingOdd
 from . import Probability, Result, Stat
 from .user import User
-from .match import Match, MatchSchema
-from .betting_odds import BettingOdds
+from .match import Match
 
 
 class Bet(db.Model):
@@ -20,11 +22,10 @@ class Bet(db.Model):
     amount = db.Column(db.Integer, nullable=False)
     result = db.Column(db.String(), nullable=False, server_default='waiting')
     set = db.Column(db.Integer, nullable=True)
-    match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
+    play_id = db.Column(db.Integer, db.ForeignKey('play.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
 
-    match: db.Mapped['Match'] = db.relationship('Match', back_populates='bets')
+    play: db.Mapped['Play'] = db.relationship('Play', back_populates='bets')
     user: db.Mapped['User'] = db.relationship('User', back_populates='bets')
 
     @classmethod
@@ -39,7 +40,8 @@ class Bet(db.Model):
         if Bet.exist(params['match_id'], user.id, params['type'], params.get('subtype', None)):
             raise Exception("existing-bet")
         with db.session() as session:
-            betting_odd = BettingOdds.query.filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
+            play = session.query(Play).filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
+            betting_odd = BettingOdd.query.filter_by(play_id=play.id).first()
             if betting_odd is None:
                 raise Exception("betting-odds-not-found")
 
@@ -47,8 +49,7 @@ class Bet(db.Model):
             if actual_odd is None:
                 raise Exception("multiplier-no-match")
             elif params['multiplier'] != actual_odd.value[str(params['subtype'])]:
-                match = Match.query.get(params['match_id'])
-                prob_finish_early = Probability.finish_early_match(session, match)
+                prob_finish_early = Probability.finish_early_match(session, play.match)
                 if params['multiplier'] != actual_odd.value[str(params['subtype'])] * (1 / (prob_finish_early * 1.1)):
                     raise Exception("multiplier-no-match")
             user.balance -= params['amount']
@@ -59,8 +60,7 @@ class Bet(db.Model):
                 multiplier=actual_odd.value[str(params['subtype'])],
                 amount=params['amount'],
                 set=params.get('set', None),
-                match_id=params['match_id'],
-                team_id=params['team_id'],
+                play_id=play.id,
                 user_id=user.id
             )
             session.add(bet)
@@ -115,8 +115,8 @@ class BetSchema(Schema):
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
     result = fields.String(metadata={'description': '#### Result of the Bet'})
     set = fields.Integer(metadata={'description': '#### Set of the Bet'})
-    match = fields.Nested(MatchSchema, dump_only=True, required=True,
-                          metadata={'description': '#### MatchId of the Bet'})
+    play = fields.Nested(PlayMatchSchema, dump_only=True, required=True,
+                         metadata={'description': '#### MatchId of the Bet'})
     match_id = fields.Integer(required=True, load_only=True, metadata={'description': '#### MatchId of the Bet'})
     team_id = fields.Integer(required=True, metadata={'description': '#### TeamId of the Bet'})
 

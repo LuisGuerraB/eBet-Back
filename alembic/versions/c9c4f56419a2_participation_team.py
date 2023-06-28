@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('website', sa.String(), nullable=True),
     sa.Column('nationality', sa.String(), nullable=True),
     sa.Column('league_id', sa.Integer(), nullable=True),
-    op.create_foreign_key(None, 'team', 'league', ['league_id'], ['id']),
+    sa.ForeignKeyConstraint(['league_id'], ['league.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('participation',

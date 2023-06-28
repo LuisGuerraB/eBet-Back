@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields
-from sqlalchemy import Index
 from database import db
+from .play import Play
 
 
 def obtain_percentage(json_frame, json_frame_opposite, type):
@@ -25,14 +25,10 @@ class Result(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     stats: db.Mapped[list['Stat']] = db.relationship('Stat', back_populates='result')
 
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
+    play_id = db.Column(db.Integer, db.ForeignKey('play.id'), nullable=False)
     set = db.Column(db.Integer, nullable=False)
 
-    team: db.Mapped['Team'] = db.relationship('Team', back_populates='results')
-    match: db.Mapped['Match'] = db.relationship('Match', back_populates='results')
-
-    __table_args__ = (Index('idx_match_set_team', 'match_id', 'set', 'team_id', unique=True),)
+    match: db.Mapped['Play'] = db.relationship('Play', back_populates='result')
 
     @classmethod
     def create_from_web_json(cls, session, json, match_id, set):
@@ -41,7 +37,8 @@ class Result(db.Model):
         n_teams = len(teams)
         for i in range(n_teams):
             team = teams[i]
-            result = Result(team_id=team['team']['id'], match_id=match_id, set=set)
+            play = session.query(Play).filter_by(match_id=match_id, team_id=team['team']['id']).first()
+            result = Result(play_id=play.id, set=set)
             session.add(result)
             session.commit()
             if team['team']['id'] == winner_id:

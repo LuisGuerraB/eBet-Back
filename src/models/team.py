@@ -15,11 +15,8 @@ class Team(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
 
     tournaments: db.Mapped[list['Participation']] = db.relationship(back_populates='team')
-    results: db.Mapped[list['Result']] = db.relationship(back_populates='team')
     probabilities: db.Mapped[list['Probability']] = db.relationship(back_populates='team')
-    matches: db.Mapped[list['Match']] = db.relationship('Match', secondary='match',
-                                                        primaryjoin='or_(Team.id == Match.local_team_id, Team.id == Match.away_team_id)',
-                                                        secondaryjoin='or_(Team.id == Match.local_team_id, Team.id == Match.away_team_id)')
+    plays: db.Mapped[list['Play']] = db.relationship(back_populates='team')
 
     def __repr__(self) -> str:
         return f'<Team #{self.id} ({self.acronym})>'
@@ -32,3 +29,9 @@ class TeamSchema(Schema):
     img = fields.String(metadata={'description': '#### Image of the Team'})
     website = fields.String(metadata={'description': '#### Website of the Team'})
     nationality = fields.String(metadata={'description': '#### Nationality of the Team'})
+
+class PlayTeamSchema(Schema):
+    team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### TeamId of the Participation'})
+    local = fields.Boolean(required=True, metadata={'description': '#### If the team is play as Local'})
+
+

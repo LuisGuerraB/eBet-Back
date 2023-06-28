@@ -1,44 +1,46 @@
-from collections import defaultdict
-
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields
 from sqlalchemy import or_
 
 from database import db
-from src.models import Probability, Match
+from src.models import Probability
+from .play import Play
 
 odds_related = ['winner']
 odds_not_related = ['kills', 'deaths', 'assists', 'towerKills', 'inhibitorKills', 'heraldKills', 'dragonKills',
                     'elderDrakeKills', 'baronKills']
 
 
-class BettingOdds(db.Model):
-    __tablename__ = 'betting_odds'
+class BettingOdd(db.Model):
+    __tablename__ = 'betting_odd'
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    odds: db.Mapped[list['Odd']] = db.relationship('Odd', back_populates='betting_odd')
+    updated = db.Column(db.Boolean, nullable=False, server_default='0')
+    play_id = db.Column(db.Integer, db.ForeignKey('play.id'), nullable=False)
 
-    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
-    match_id = db.Column(db.Integer, db.ForeignKey('match.id'), nullable=False)
+    odds: db.Mapped[list['Odd']] = db.relationship('Odd', back_populates='betting_odd')
+    play: db.Mapped['Play'] = db.relationship('Play', back_populates='betting_odd')
 
     @classmethod
     def create(cls, session, match, team_id, opposing_team_id):
-        betting_odds = session.query(BettingOdds).filter(BettingOdds.team_id == team_id,
-                                                         BettingOdds.match_id == match.id).first()
-        if not betting_odds:
-            betting_odds = BettingOdds(match_id=match.id, team_id=team_id)
-            session.add(betting_odds)
+        play = session.query(Play).filter(Play.match_id == match.id, Play.team_id == team_id).first()
+
+        if play.betting_odd is None:
+            betting_odd = BettingOdd(play_id=play.id)
+            session.add(betting_odd)
             session.commit()
-            betting_odds.update_data(session, opposing_team_id)
+            betting_odd.update_data(session, opposing_team_id)
         else:
-            betting_odds.update_data(session, opposing_team_id)
+            play.betting_odd.update_data(session, opposing_team_id)
         session.commit()
-        return betting_odds
+        return play.betting_odd
 
     def update_data(self, session, opposing_team_id: int):
-        match_league_id = session.query(Match).get(self.match_id).tournament.league.id
+        if self.updated:
+            return
+        match_league_id = self.play.match.tournament.league.id
 
         team_probs = (session.query(Probability)
-                      .filter(Probability.team_id == self.team_id,
+                      .filter(Probability.team_id == self.play.team_id,
                               or_(Probability.league_id == match_league_id, Probability.league_id == None))
                       .order_by(Probability.league_id).all())
 
@@ -75,11 +77,11 @@ class BettingOdds(db.Model):
                                                prob_units[number_off_probs:], self.id, percentage)
                 session.add(odd)
                 session.commit()
+        self.updated = True
+        session.commit()
 
     def __str__(self):
-        return f'{self.win_odds} {self.gold_odds} {self.exp_odds}' \
-               f' {self.towers_odds} {self.drakes_odds} {self.inhibitors_odds} {self.elders_odds} {self.barons_odds}' \
-               f' {self.heralds_odds} {self.kills_odds} {self.deaths_odds} {self.assists_odds}'
+        return f'<Odd : {self.id} - {self.updated} - {self.play.match}>'
 
 
 class Odd(db.Model):
@@ -89,8 +91,8 @@ class Odd(db.Model):
     type = db.Column(db.String(15), primary_key=True)
     value = db.Column(db.JSON())
 
-    betting_odd_id = db.Column(db.Integer, db.ForeignKey('betting_odds.id'), primary_key=True)
-    betting_odd: db.Mapped['BettingOdds'] = db.relationship('BettingOdds', back_populates="odds")
+    betting_odd_id = db.Column(db.Integer, db.ForeignKey('betting_odd.id'), primary_key=True)
+    betting_odd: db.Mapped['BettingOdd'] = db.relationship('BettingOdd', back_populates='odds')
 
     def __repr__(self):
         return f'<Odd : {self.type} - {self.value}>'
@@ -111,7 +113,7 @@ class Odd(db.Model):
         for i in range(len(team_prob_list)):
             team_prob = team_prob_list[i].probs
             opposing_prob = opposing_prob_list[i].probs
-            res_value["1"] = res_value.get("1", 0) + cls.calc_odds(team_prob["1"],opposing_prob["1"],percentage, type)
+            res_value["1"] = res_value.get("1", 0) + cls.calc_odds(team_prob["1"], opposing_prob["1"], percentage, type)
         odd = cls.query.filter(cls.type == type, cls.betting_odd_id == betting_odd_id).first()
 
         if odd is None:

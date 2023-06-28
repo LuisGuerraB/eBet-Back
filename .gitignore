@@ -1,4 +1,4 @@
-config/
-config.py
 .env
 static/
+db-local.env
+alembic.ini

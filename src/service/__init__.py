@@ -8,7 +8,7 @@ from .result_service import result_blp
 from .tournament_service import tournament_blp
 from .team_service import team_blp
 from .bet_service import bet_blp
-from .betting_odds_service import betting_odds_blp
+from .betting_odd_service import betting_odds_blp
 from .user_service import user_blp
 from .prize_service import prize_blp
 

@@ -1,0 +1,27 @@
+version: '3.1'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: container/api.dockerfile
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - ${FLASK_PORT_MAPPING}
+    depends_on:
+      - pgsql
+    env_file:
+      - ./.env
+
+  pgsql:
+    container_name: pgsql
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${PGSQL_ADMIN_PASS}
+      POSTGRES_USER: ${PGSQL_ADMIN_USERNAME}
+      POSTGRES_DB : ${PGSQL_DATABASE_NAME}
+    volumes:
+      - ${PGSQL_VOLUME}:/var/lib/postgresql/data
+    command: -p ${PGSQL_PORT}

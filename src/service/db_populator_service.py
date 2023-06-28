@@ -1,5 +1,5 @@
 from flask_smorest import Blueprint, abort
-from app import db
+from database import db
 
 from src.classes import DbPopulator, MatchPopulateSchema, Scheduler
 from src.enums import MatchStatus

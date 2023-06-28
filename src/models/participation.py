@@ -1,8 +1,8 @@
 from marshmallow import Schema, fields
 
 from database import db
-from .tournament import Tournament, TournamentSchema
 from .team import TeamSchema
+from .tournament import Tournament
 
 
 
