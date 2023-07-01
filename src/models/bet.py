@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from marshmallow import Schema, fields
+from sqlalchemy import or_
 
 from database import db
 from .play import Play
@@ -20,7 +21,7 @@ class Bet(db.Model):
     subtype = db.Column(db.Integer)
     multiplier = db.Column(db.Float(2), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
-    result = db.Column(db.String(), nullable=False, server_default='waiting')
+    result = db.Column(db.Boolean, nullable=True)
     set = db.Column(db.Integer, nullable=True)
     play_id = db.Column(db.Integer, db.ForeignKey('play.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -29,15 +30,16 @@ class Bet(db.Model):
     user: db.Mapped['User'] = db.relationship('User', back_populates='bets')
 
     @classmethod
-    def exist(cls, match_id, user_id, type, subtype=None) -> bool:
-        return cls.query.filter(cls.match_id == match_id, cls.user_id == user_id, cls.type == type,
+    def exist(cls, match_id, team_id, user_id, type, subtype=None) -> bool:
+        play = Play.query.filter(Play.match_id == match_id, Play.team_id == team_id).first()
+        return cls.query.filter(cls.play_id == play.id, cls.user_id == user_id, cls.type == type,
                                 cls.subtype == subtype).first()
 
     @classmethod
     def create(self, user, **params):
         if user.balance < params['amount']:
             raise Exception("insuficient-funds")
-        if Bet.exist(params['match_id'], user.id, params['type'], params.get('subtype', None)):
+        if Bet.exist(params['match_id'], params['team_id'], user.id, params['type'], params.get('subtype', None)):
             raise Exception("existing-bet")
         with db.session() as session:
             play = session.query(Play).filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
@@ -69,7 +71,7 @@ class Bet(db.Model):
 
     @classmethod
     def get_user_bets(self, user):
-        return sorted(user.bets, key=lambda bet: bet.date, reverse=True)
+        return sorted(user.bets, key=lambda bet: bet.play.match.ini_date, reverse=True)
 
     def delete(self, session):
         user = self.user
@@ -87,19 +89,32 @@ class Bet(db.Model):
         session.commit()
 
     def resolve(self, session):
-        stat = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
+        stats = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
             Stat.type == self.type,
             Result.team_id == self.team_id,
             Result.match_id == self.match_id,
-            Result.set == self.set,
-        ).first()
+            or_(Result.set == self.set, self.type == 'winner'),
+        ).all()
         match = session.query(Match).get(self.match_id)
         user = session.query(User).get(self.user_id)
-        if stat.value >= self.subtype and match.ini_date > self.date:
-            user.balance += self.amount * self.multiplier
-            self.result = '+' + str(self.amount * self.multiplier)
+        claim = False
+        if self.type == 'winner':
+            sum = 0
+            for stat in stats:
+                sum += stat.value
+            if sum > match.sets // 2:
+                claim = True
         else:
-            self.result = '-' + str(self.amount)
+            stat = stats[0]
+            if stat.value >= self.subtype:
+                claim = True
+
+        if claim and match.ini_date > self.date:
+            user.balance += round(self.amount * self.multiplier)
+            self.result = True
+        else:
+            self.result = False
+
         session.commit()
 
     def __repr__(self):
@@ -113,12 +128,12 @@ class BetSchema(Schema):
     subtype = fields.Integer(required=True, metadata={'description': '#### Subtype of the Bet'})
     multiplier = fields.Float(format='0.00', required=True, metadata={'description': '#### Multiplier of the Bet'})
     amount = fields.Integer(required=True, metadata={'description': '#### Amount of the Bet'})
-    result = fields.String(metadata={'description': '#### Result of the Bet'})
+    result = fields.Boolean(metadata={'description': '#### Result of the Bet'})
     set = fields.Integer(metadata={'description': '#### Set of the Bet'})
     play = fields.Nested(PlayMatchSchema, dump_only=True, required=True,
                          metadata={'description': '#### MatchId of the Bet'})
     match_id = fields.Integer(required=True, load_only=True, metadata={'description': '#### MatchId of the Bet'})
-    team_id = fields.Integer(required=True, metadata={'description': '#### TeamId of the Bet'})
+    team_id = fields.Integer(required=True, load_only=True, metadata={'description': '#### TeamId of the Bet'})
 
 
 class BetListSchema(Schema):

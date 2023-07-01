@@ -26,7 +26,7 @@ def create_bet(params):
         bet_id = Bet.create(user, **params)
         return Bet.query.get(bet_id)
     except Exception as e:
-        abort(409, message="control-error." + str(e))
+        abort(404, message="control-error." + str(e))
 
 
 @bet_blp.route(api_url + '/list', methods=['GET'])

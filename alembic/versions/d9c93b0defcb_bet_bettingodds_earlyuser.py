@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('subtype', sa.Integer(), nullable=True),
     sa.Column('multiplier', sa.Float(precision=2), nullable=False),
     sa.Column('amount', sa.Integer(), nullable=False),
-    sa.Column('result', sa.String(), server_default='waiting', nullable=False),
+    sa.Column('result', sa.Boolean(), nullable=True),
     sa.Column('set', sa.Integer(), nullable=True),
     sa.Column('match_id', sa.Integer(), nullable=False),
     sa.Column('team_id', sa.Integer(), nullable=False),

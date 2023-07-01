@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 
 from apscheduler.triggers.cron import CronTrigger
 from flask_apscheduler import APScheduler
@@ -41,13 +41,31 @@ class Scheduler:
             res.append(str(i))
         return res
 
+    def schedule_matches(self):
+        today = date.today()
+        year = today.year
+        current_month = today.month
+        limit = 500
+        for month in range(current_month, 13):
+            match_list = self.db_populator.api_scrapper.get_list_match(MatchStatus.NOT_STARTED, year, month,
+                                                                       leagueId=None, limit=limit,
+                                                                       page=0)
+            if match_list is None:
+                return
+            for match_json in match_list:
+                if match_json['awayTeamId'] is None or match_json['homeTeamId'] is None:
+                    continue
+                self.add_match_to_scheduler(match_json['id'], match_json['numberOfGames'],
+                                            match_json['scheduledAt'])
+
     def schedule_repopulate_matches(self):
         trigger = CronTrigger(day_of_week='sun', hour=0, minute=0)
         self._scheduler.add_job(id='repopulate_matches', func=lambda: self.populate_matches(), trigger=trigger)
 
     def add_match_to_scheduler(self, match_id, sets, start_date):
         self._scheduler.add_job(func=lambda: self.wake_up_result_scrapping(match_id, sets), trigger='date',
-                                run_date=start_date, id=f'generate_{match_id}', replace_existing=True)
+                                run_date=start_date, id=f'generate_{match_id}', replace_existing=True,
+                                misfire_grace_time=3600, coalesce=False)
 
     def wake_up_result_scrapping(self, match_id, sets):
         for set in range(1, sets + 1):
@@ -56,18 +74,19 @@ class Scheduler:
 
     def update_result(self, match_id, set):
         with self._scheduler.app.app_context():
-            self.db_populator.populate_result(match_id, set, session=db.session())
+            session = db.session(expire_on_commit=False)
+            self.db_populator.populate_result(match_id, set, session=session)
             match = Match.query.get(match_id)
             if match.end_date is not None:
                 self._scheduler.remove_job(f'update_{match_id}_{set}')
-                self.db_populator.update_data_from_match(match, session=db.session(expire_on_commit=False))
-                self.db_populator.resolve_bets(match, session=db.session(expire_on_commit=False))
+                self.db_populator.update_data_from_match(match, session=session)
+                self.db_populator.resolve_bets(match, session=session)
 
     def populate_matches(self):
         with self._scheduler.app.app_context():
-            today = datetime.today()
+            today = date.today()
             year = today.year
-            actual_month = today.month
-            self.db_populator.populate_matches(MatchStatus.NOT_STARTED, year=year, month=actual_month)
+            current_month = today.month
+            self.db_populator.populate_matches(MatchStatus.NOT_STARTED, year=year, month=current_month)
             if today.day > 20:
-                self.db_populator.populate_matches(MatchStatus.NOT_STARTED, year=year, month=actual_month + 1)
+                self.db_populator.populate_matches(MatchStatus.NOT_STARTED, year=year, month=current_month + 1)

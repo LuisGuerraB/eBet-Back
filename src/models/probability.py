@@ -1,11 +1,11 @@
 from collections import defaultdict
 
 from marshmallow import Schema, fields
-from sqlalchemy import  desc
+from sqlalchemy import desc
 from sqlalchemy.orm import validates
 
 from database import db
-from src.models import Match
+from src.models import Match, Result
 from .play import Play
 
 
@@ -44,7 +44,7 @@ class Probability(db.Model):
     team: db.Mapped['Team'] = db.relationship('Team', back_populates='probabilities')
 
     @classmethod
-    def create_probabilities_from_team_at_league(cls, team_id, league_id=None ,session = None):
+    def create_probabilities_from_team_at_league(cls, team_id, league_id=None, session=None):
         # Get match of the team at a league
         if session is None:
             session = db.session(expire_on_commit=False)
@@ -62,12 +62,12 @@ class Probability(db.Model):
             ).order_by(desc(Match.ini_date)).all()
 
         # Get the results of the match an order it by match.ini_date
-        results = [play.result for play in plays if play.result is not None]
+        results = session.query(Result).filter(Result.play_id.in_([play.id for play in plays])).all()
         matches = [play.match for play in plays if play.match is not None]
         if len(results) != 0:
             prob_finished_early = ProbUnit.calc_prob(
                 [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
-                 match.sets != 1])
+                 match.sets != 1], force=True)
             if probability is None:
                 probability = Probability(team_id=team_id, league_id=league_id)
                 session.add(probability)
@@ -104,20 +104,11 @@ class Probability(db.Model):
         prob_finish_early = sum(prob_finish_early_array) / len(prob_finish_early_array)
         return prob_finish_early
 
-    def __str__(self):
-        return f"Probability: {self.id}\n" \
-               f"Probability_win: {self.prob_win}%\n" \
-               f"Probability gold: {self.prob_gold}%\n" \
-               f"Probability exp: {self.prob_exp}%\n" \
-               f"Probability towers: {self.prob_towers}\n" \
-               f"Probability drakes: {self.prob_drakes}\n" \
-               f"Probability inhibitors: {self.prob_inhibitors}\n" \
-               f"Probability elders: {self.prob_elders}\n" \
-               f"Probability barons: {self.prob_barons}\n" \
-               f"Probability heralds: {self.prob_heralds}\n" \
-               f"Probability kills: {self.prob_kills}\n" \
-               f"Probability deaths: {self.prob_deaths}\n" \
-               f"Probability assists: {self.prob_assists}\n"
+    def __repr__(self):
+        return f"<Probability: {self.id}\n" \
+               f"Prob_finish_early: {self.prob_finish_early}%\n" \
+               f"Updated: {self.updated}%\n" \
+               f"Prob_units : {self.prob_units}>"
 
 
 class ProbUnit(db.Model):
@@ -154,7 +145,7 @@ class ProbUnit(db.Model):
         return prob
 
     @classmethod
-    def calc_prob(cls, list, multiplier=(1, 2, 3)):
+    def calc_prob(cls, list, multiplier=(1, 2, 3), force=False):
         prob_total = 0
         prob_ini = cls.PROB_INI
         prob_res = [0, 0, 0]
@@ -180,7 +171,7 @@ class ProbUnit(db.Model):
         res = {}
         for i in range(3):
             prob_res[i] = round(prob_res[i] / 100.0, 2)
-            if len_min:
+            if len_min or force:
                 res[multiplier[i]] = cls.justify_probability(prob_res[i])
             elif 1 > prob_res[i] > 0:
                 res[multiplier[i]] = prob_res[i]

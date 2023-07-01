@@ -16,7 +16,7 @@ def obtain_percentage(json_frame, json_frame_opposite, type):
     return count / float(total)
 
 
-avoid_types = ['frames', 'team', 'goldEarned']
+avoid_types = ['frames', 'team', 'goldEarned', 'deaths']
 
 
 class Result(db.Model):
@@ -49,6 +49,23 @@ class Result(db.Model):
                 if stat not in avoid_types:
                     session.add(Stat(type=stat, value=team[stat], result_id=result.id))
 
+    @classmethod
+    def get_from_match(cls, match):
+        res = {
+            'away_team_result': [],
+            'local_team_result': [],
+        }
+        with db.session() as session:
+            if match is None:
+                return res
+            for play in match.plays:
+                result = session.query(Result).filter_by(play_id=play.id).order_by(Result.set).all()
+                if result is None:
+                    continue
+                if play.local:
+                    res['away_team_result'].append(result)
+                else:
+                    res['local_team_result'].append(result)
 
     def __repr__(self):
         return f'<Result : {self.team_id} - {self.match_id} - {self.set}>'
@@ -81,3 +98,8 @@ class ResultSchema(Schema):
     id = fields.Integer(dump_only=True, metadata={'description': '#### Id of the Result'})
     set = fields.Integer(metadata={'description': '#### Set of the Result'})
     stats = fields.Nested(StatSchema, many=True, metadata={'description': '#### Stats of the Result'})
+
+
+class ResultByMatchSchema(Schema):
+    away_team_result = fields.Nested(ResultSchema, many=True, metadata={'description': '#### Away team odds'})
+    local_team_result = fields.Nested(ResultSchema, many=True, metadata={'description': '#### Local team odds'})
