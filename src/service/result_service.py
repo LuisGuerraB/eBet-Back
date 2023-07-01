@@ -13,7 +13,7 @@ result_blp = Blueprint(
 )
 
 
-@result_blp.route(api_url+'/<int:match_id>', methods=['GET'])
+@result_blp.route(api_url+'/match/<int:match_id>', methods=['GET'])
 @result_blp.doc(tags=[api_name])
 @result_blp.response(200, ResultSchema)
 def get_result(match_id):
