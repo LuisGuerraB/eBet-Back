@@ -1,10 +1,10 @@
 from datetime import datetime
 from operator import or_
+from flask_smorest import abort
 
 from marshmallow import Schema, fields, validate
 
 from database import db
-from .result import Result
 from .play import Play
 from .team import PlayTeamSchema
 from .tournament import TournamentSchema, Tournament
@@ -27,13 +27,15 @@ class Match(db.Model):
     tournament: db.Mapped['Tournament'] = db.relationship('Tournament', back_populates='matches')
 
     @classmethod
-    def get_list(cls, league_id=None, finished=None, year=None, month=None, page=1, limit=10):
+    def get_list(cls, league_id=None,team_id=None, finished=None, year=None, month=None, page=1, limit=10):
         query = cls.query
-        if league_id:
-            query = query.join(Tournament).filter(Tournament.league_id == league_id)
-        if year:
+        if league_id is not None:
+            query = query.join(Tournament, Tournament.id == Match.tournament_id).filter(Tournament.league_id == league_id)
+        if team_id is not None:
+            query = query.join(Play, Play.match_id == Match.id).filter(Play.team_id == team_id)
+        if year is not None:
             query = query.filter(db.extract('year', cls.plan_date) == year)
-        if month:
+        if month is not None:
             query = query.filter(db.extract('month', cls.plan_date) == month)
         if finished is not None:
             now = datetime.now()
@@ -42,25 +44,8 @@ class Match(db.Model):
                     Match.plan_date.desc())
             else:
                 query = query.filter(cls.end_date.is_(None)).order_by(Match.plan_date.asc())
-        try:
-            matches = query.paginate(page=page, per_page=limit)
-            return matches.items
-        except Exception as e:
-            return []
-
-    def update_result(self, session=None):
-        if session is None:
-            session = db.session()
-        match_res = {}
-        results = session.query(Result).join(Play, Result.play_id == Play.id).filter(Play.match_id == self.id).all()
-        if len(results) == 0:
-            return
-        for result in results:
-            win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
-            if win_stat is not None:
-                match_res[result.play.team.acronym] = match_res.get(result.play.team.acronym,0) + win_stat
-        self.result = match_res
-        self.final_set = len(results) // 2
+        matches = query.paginate(page=page, per_page=limit)
+        return matches.items
 
 
 class MatchSchema(Schema):
@@ -78,8 +63,8 @@ class MatchSchema(Schema):
 
 
 class MatchListArgumentSchema(Schema):
-    league_id = fields.Integer(validate=validate.Range(min=1),
-                               metadata={'description': '#### Id of the League to match'})
+    league_id = fields.Integer(metadata={'description': '#### Id of the League to match'})
+    team_id = fields.Integer(metadata={'description': '#### Id of the Team'})
     finished = fields.Boolean(metadata={'description': '#### If the match is finished'})
     year = fields.Integer(validate=validate.Range(min=2022), metadata={'description': '#### Year of the Match'})
     month = fields.Integer(validate=validate.Range(min=1, max=12), metadata={'description': '#### Month of the Match'})
