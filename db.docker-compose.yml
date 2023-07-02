@@ -16,7 +16,7 @@ services:
 
   pgsql:
     container_name: pgsql
-    image: postgres
+    image: postgres:15
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${PGSQL_ADMIN_PASS}

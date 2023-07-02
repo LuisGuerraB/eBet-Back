@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(), nullable=False)
     password = db.Column(db.String(), nullable=False)
     balance = db.Column(db.Integer, default=100, nullable=False)
-    img = db.Column(db.String(), default='assets/users_profile/user.svg', nullable=False)
+    img = db.Column(db.String(), default='static/users_profile/user.svg', nullable=False)
     last_login = db.Column(db.DateTime, server_default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), nullable=False)
     privileges = db.Column(db.String(3), server_default='', nullable=False)
 
@@ -70,7 +70,8 @@ class User(db.Model, UserMixin):
         old_img = self.img
         self.img = saving_route
         db.session().commit()
-        os.remove(old_img)
+        if os.path.exists(old_img) and old_img != 'static/users_profile/user.svg':
+            os.remove(old_img)
         return saving_route
 
     def update(self, user):

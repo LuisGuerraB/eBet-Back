@@ -4,6 +4,8 @@ from operator import or_
 from marshmallow import Schema, fields, validate
 
 from database import db
+from .result import Result
+from .play import Play
 from .team import PlayTeamSchema
 from .tournament import TournamentSchema, Tournament
 
@@ -46,15 +48,17 @@ class Match(db.Model):
         except Exception as e:
             return []
 
-    def update_result(self):
+    def update_result(self, session=None):
+        if session is None:
+            session = db.session()
         match_res = {}
-        results = [play.result for play in self.plays if play.result is not None]
+        results = session.query(Result).join(Play, Result.play_id == Play.id).filter(Play.match_id == self.id).all()
         if len(results) == 0:
             return
         for result in results:
             win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
             if win_stat is not None:
-                match_res[result.play.team.acronym] = win_stat
+                match_res[result.play.team.acronym] = match_res.get(result.play.team.acronym,0) + win_stat
         self.result = match_res
         self.final_set = len(results) // 2
 
@@ -66,7 +70,7 @@ class MatchSchema(Schema):
     plan_date = fields.DateTime(required=True, metadata={'description': '#### Planned date of the Match'})
     ini_date = fields.DateTime(metadata={'description': '#### Iniciation date of the Match'})
     end_date = fields.DateTime(metadata={'description': '#### End date of the Match'})
-    teams = fields.List(fields.Nested(PlayTeamSchema), dump_only=True, required=True,
+    plays = fields.List(fields.Nested(PlayTeamSchema), dump_only=True, required=True,
                         metadata={'description': '#### List of Plays'})
     tournament = fields.Nested(TournamentSchema, required=True,
                                metadata={'description': '#### Tournament of the Match'})
@@ -88,5 +92,7 @@ class MatchListSchema(Schema):
                         metadata={'description': '#### List of Matches'})
     total = fields.Integer(dump_only=True, required=True, metadata={'description': '#### Total number of matches'})
 
+
 class PlayMatchSchema(Schema):
-    match = fields.Nested(MatchSchema, required=True, metadata={'description': '#### MatchId of the Match'})
+    match = fields.Nested(MatchSchema, required=True, metadata={'description': '#### Match of the Play'})
+    team_id = fields.Integer(required=True, metadata={'description': '#### TeamId of the Play'})

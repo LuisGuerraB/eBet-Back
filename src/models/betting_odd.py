@@ -81,7 +81,7 @@ class BettingOdd(db.Model):
         session.commit()
 
     def __str__(self):
-        return f'<Odd : {self.id} - {self.updated} - {self.play.match}>'
+        return f'<BettingOdd : {self.id} - {self.updated} - {self.play.match}>'
 
 
 class Odd(db.Model):
@@ -98,7 +98,7 @@ class Odd(db.Model):
         return f'<Odd : {self.type} - {self.value}>'
 
     @classmethod
-    def calc_odds(cls, team_prob: float, opposing_team_prob: float, percentage=1.0, attr='') -> float:
+    def calc_odds(cls, team_prob: float, opposing_team_prob: float, percentage=1.0) -> float:
         return round((1 / ((team_prob + cls.LEVERAGE) / (team_prob + opposing_team_prob))) * percentage, 2)
 
     @classmethod
@@ -113,7 +113,7 @@ class Odd(db.Model):
         for i in range(len(team_prob_list)):
             team_prob = team_prob_list[i].probs
             opposing_prob = opposing_prob_list[i].probs
-            res_value["1"] = res_value.get("1", 0) + cls.calc_odds(team_prob["1"], opposing_prob["1"], percentage, type)
+            res_value["1"] = res_value.get("1", 0) + cls.calc_odds(team_prob["1"], opposing_prob["1"], percentage)
         odd = cls.query.filter(cls.type == type, cls.betting_odd_id == betting_odd_id).first()
 
         if odd is None:
