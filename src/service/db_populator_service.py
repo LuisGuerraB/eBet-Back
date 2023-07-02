@@ -36,16 +36,14 @@ def teams(league_id):
         abort(400, message=str(e))
 
 
-
 @db_populator_blp.route(api_url + '/matches', methods=['PUT'])
 @db_populator_blp.doc(tags=[api_name])
 @db_populator_blp.arguments(MatchPopulateSchema, location='json')
 @db_populator_blp.response(204)
 def matches(params):
     try:
-
         DbPopulator().populate_matches(params.get('status'), params.get('year'), params.get('month'),
-                                   params.get('limit'), params.get('page'))
+                                       params.get('limit'), params.get('page'))
     except Exception as e:
         abort(400, message=str(e))
 
@@ -65,10 +63,10 @@ def results(match_id, set):
 @db_populator_blp.response(204)
 def populate():
     """Populate whole database"""
-    #try:
-    DbPopulator().populate_DB()
-    #except Exception as e:
-    #    abort(400, message=str(e))
+    try:
+        DbPopulator().populate_DB()
+    except Exception as e:
+        abort(400, message=str(e))
 
 
 @db_populator_blp.route(api_url + '/probability', methods=['PUT'])

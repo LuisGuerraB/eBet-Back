@@ -26,7 +26,7 @@ type_multiplier_dictionary = {
     'dragonKills': (0, 2, 4),
     'kills': (10, 20, 30),
     'deaths': (10, 20, 30),
-    'assists': (10, 20, 30),
+    'assists': (20, 40, 60),
 }
 
 

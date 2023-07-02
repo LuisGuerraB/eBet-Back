@@ -26,6 +26,7 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'betting_odd', 'play', ['play_id'], ['id'])
     op.drop_column('betting_odd', 'team_id')
     op.drop_column('betting_odd', 'match_id')
+    op.create_unique_constraint('_play_set_uc', 'result', ['play_id', 'set'])
     # ### end Alembic commands ###
 
 
@@ -39,4 +40,5 @@ def downgrade() -> None:
     op.create_foreign_key('betting_odd_match_id_fkey', 'betting_odd', 'match', ['match_id'], ['id'])
     op.drop_column('betting_odd', 'play_id')
     op.drop_column('betting_odd', 'updated')
+    op.drop_constraint('_play_set_uc', 'result', type_='unique')
     # ### end Alembic commands ###

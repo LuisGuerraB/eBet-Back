@@ -23,7 +23,7 @@ class Participation(db.Model):
         regular_tournament = Tournament.get_regular_tournament(league_id)
         if regular_tournament is None:
             raise Exception('control-error.no-regular-tournament')
-        return Participation.query.filter(cls.tournament_id == regular_tournament.id).all()
+        return Participation.query.filter(cls.tournament_id == regular_tournament.id).order_by(cls.position).all()
 
 
 class ParticipationSchema(Schema):

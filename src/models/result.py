@@ -1,4 +1,6 @@
 from marshmallow import Schema, fields
+from sqlalchemy import UniqueConstraint
+
 from database import db
 from .play import Play
 
@@ -30,6 +32,10 @@ class Result(db.Model):
 
     play: db.Mapped['Play'] = db.relationship('Play', back_populates='result')
 
+    __table_args__ = (
+        UniqueConstraint('play_id', 'set', name='_play_set_uc'),
+    )
+
     @classmethod
     def create_from_web_json(cls, session, json, match_id, set):
         winner_id = json['winner']['id']
@@ -38,16 +44,17 @@ class Result(db.Model):
         for i in range(n_teams):
             team = teams[i]
             play = session.query(Play).filter_by(match_id=match_id, team_id=team['team']['id']).first()
-            result = Result(play_id=play.id, set=set)
-            session.add(result)
-            session.commit()
-            if team['team']['id'] == winner_id:
-                session.add(Stat(type='winner', value=1, result_id=result.id))
-            else:
-                session.add(Stat(type='winner', value=0, result_id=result.id))
-            for stat in team:
-                if stat not in avoid_types:
-                    session.add(Stat(type=stat, value=team[stat], result_id=result.id))
+            if session.query(Result).filter_by(play_id=play.id, set=set).first() is None:
+                result = Result(play_id=play.id, set=set)
+                session.add(result)
+                session.commit()
+                if team['team']['id'] == winner_id:
+                    session.add(Stat(type='winner', value=1, result_id=result.id))
+                else:
+                    session.add(Stat(type='winner', value=0, result_id=result.id))
+                for stat in team:
+                    if stat not in avoid_types:
+                        session.add(Stat(type=stat, value=team[stat], result_id=result.id))
 
     @classmethod
     def get_from_match(cls, match):
@@ -59,19 +66,22 @@ class Result(db.Model):
             if match is None:
                 return res
             for play in match.plays:
-                result = session.query(Result).filter_by(play_id=play.id).order_by(Result.set).all()
-                if result is None:
+                results = session.query(Result).filter_by(play_id=play.id).order_by(Result.set).all()
+                if results is None:
                     continue
-                if play.local:
-                    res['away_team_result'].append(result)
-                else:
-                    res['local_team_result'].append(result)
+                for result in results:
+                    result.stats.sort(key=lambda x: x.type, reverse=True)
+                    if play.local:
+                        res['local_team_result'].append(result)
+                    else:
+                        res['away_team_result'].append(result)
+            return res
 
     def __repr__(self):
-        return f'<Result : {self.team_id} - {self.match_id} - {self.set}>'
+        return f'<Result : {self.play_id} - {self.set} - {self.stats}>'
 
     def __str__(self):
-        return f'{self.team_id} - {self.match_id} - {self.set}'
+        return f'{self.play_id} - {self.set} - {self.stats}'
 
 
 class Stat(db.Model):

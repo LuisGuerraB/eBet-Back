@@ -50,7 +50,7 @@ class Match(db.Model):
 
     def update_result(self, session=None):
         if session is None:
-            session = db.session(expire_on_commit=False)
+            session = db.session()
         match_res = {}
         results = session.query(Result).join(Play, Result.play_id == Play.id).filter(Play.match_id == self.id).all()
         if len(results) == 0:
@@ -58,7 +58,7 @@ class Match(db.Model):
         for result in results:
             win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
             if win_stat is not None:
-                match_res[result.play.team.acronym] = win_stat
+                match_res[result.play.team.acronym] = match_res.get(result.play.team.acronym,0) + win_stat
         self.result = match_res
         self.final_set = len(results) // 2
 

@@ -39,7 +39,7 @@ class DbPopulator:
                 self.populate_matches(MatchStatus.NOT_STARTED, year=year, month=month, limit=limit, session=session)
 
             # Fill the DB with matchs that have finished
-            for month in range(current_month + 1, 1, -1):
+            for month in range(current_month + 1, 0, -1):
                 matches_finished_list = self.populate_matches(MatchStatus.FINISHED, year=year, month=month,
                                                               limit=limit, session=session)
                 total_matches_with_results += matches_finished_list
@@ -53,6 +53,7 @@ class DbPopulator:
                         result = session.query(Result).filter_by(play_id=play.id, set=set + 1).first()
                         if result is None:
                             self.populate_result(match.id, set + 1, session=session)
+                self.resolve_bets(match, session=session)
 
             leagues = League.query.all()
             for league in leagues:
@@ -84,10 +85,10 @@ class DbPopulator:
             if match_obj is None:
                 if session.get(Tournament, match_json['tournamentId']) is None:
                     self.populate_tournaments(status, int(match_json['scheduledAt'][:4]),
-                                              int(match_json['scheduledAt'][5:7]))
+                                              int(match_json['scheduledAt'][5:7]),session=session)
                 if (session.get(Team, match_json['awayTeamId']) is None or
                         session.get(Team, match_json['homeTeamId']) is None):
-                    self.populate_teams(match_json['tournament']['serie']['league']['id'])
+                    self.populate_teams(match_json['tournament']['serie']['league']['id'],session=session)
                 match_obj = Match(
                     id=match_json['id'],
                     name=match_json['name'],
@@ -112,31 +113,32 @@ class DbPopulator:
         session.commit()
         return match_list_result
 
-    def populate_tournaments(self, status, year, month):
-        with db.session() as session:
-            tournament_list = self.api_scrapper.get_tournaments(status, year, month)
-            for tournament_json in tournament_list:
-                tournament_obj = session.get(Tournament, tournament_json['id'])
-                if tournament_obj is None:
-                    league_json = tournament_json['serie']['league']
-                    if session.get(League, league_json['id']) is None:
-                        league_obj = League(
-                            id=league_json['id'],
-                            name=league_json['name'],
-                            acronym=league_json['shortName'],
-                            img=league_json['imageUrl'].replace('black', 'white'),
-                        )
-                        session.add(league_obj)
-                    tournament_obj = Tournament(
-                        id=tournament_json['id'],
-                        name=tournament_json['name'],
-                        serie_id=tournament_json['serie']['id'],
-                        ini_date=tournament_json['beginAt'],
-                        end_date=tournament_json['endAt'],
-                        league_id=league_json['id']
+    def populate_tournaments(self, status, year, month, session=None):
+        if session is None:
+            session = db.session()
+        tournament_list = self.api_scrapper.get_tournaments(status, year, month)
+        for tournament_json in tournament_list:
+            tournament_obj = session.get(Tournament, tournament_json['id'])
+            if tournament_obj is None:
+                league_json = tournament_json['serie']['league']
+                if session.get(League, league_json['id']) is None:
+                    league_obj = League(
+                        id=league_json['id'],
+                        name=league_json['name'],
+                        acronym=league_json['shortName'],
+                        img=league_json['imageUrl'].replace('black', 'white'),
                     )
-                    session.add(tournament_obj)
-            session.commit()
+                    session.add(league_obj)
+                tournament_obj = Tournament(
+                    id=tournament_json['id'],
+                    name=tournament_json['name'],
+                    serie_id=tournament_json['serie']['id'],
+                    ini_date=tournament_json['beginAt'],
+                    end_date=tournament_json['endAt'],
+                    league_id=league_json['id']
+                )
+                session.add(tournament_obj)
+        session.commit()
 
     def populate_result(self, match_id, set=1, session=None):
         if session is None:
@@ -146,11 +148,11 @@ class DbPopulator:
         if result_json:
             if session.get(Match, match_id) is None:  # If doesn't exist match at DB
                 self.populate_matches(MatchStatus.FINISHED, year=int(result_json['beginAt'][:4]),
-                                      month=int(result_json['beginAt'][5:7]), limit=100)
+                                      month=int(result_json['beginAt'][5:7]), limit=100, session=session)
             match_obj = session.get(Match, match_id)
             match_obj.end_date = result_json['endAt']
             match_obj.ini_date = result_json['beginAt']
-            for result_obj in [play.result for play in match_obj.plays if play.result is not None]:
+            for result_obj in [play.result for play in match_obj.plays if play.result is not None and len(play.result.stats) != 0]:
                 if result_obj.set == set:
                     load = False
             if load:
@@ -212,7 +214,7 @@ class DbPopulator:
         session.commit()
 
     def resolve_bets(self, match, session):
-        bets = session.query(Bet).filter_by(match_id=match.id).all()
+        bets = session.query(Bet).join(Play, Play.id == Bet.play_id).filter(Play.match_id == match.id).all()
         for bet in bets:
             bet.resolve(session)
 

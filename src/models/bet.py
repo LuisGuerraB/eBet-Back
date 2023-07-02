@@ -1,15 +1,13 @@
 from datetime import datetime
 
 from marshmallow import Schema, fields
-from sqlalchemy import or_
 
 from database import db
 from .play import Play
-from .match import PlayMatchSchema
 from .betting_odd import BettingOdd
 from . import Probability, Result, Stat
 from .user import User
-from .match import Match
+from .match import Match, PlayMatchSchema
 
 
 class Bet(db.Model):
@@ -89,31 +87,34 @@ class Bet(db.Model):
         session.commit()
 
     def resolve(self, session):
-        stats = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
-            Stat.type == self.type,
-            Result.team_id == self.team_id,
-            Result.match_id == self.match_id,
-            or_(Result.set == self.set, self.type == 'winner'),
-        ).all()
-        match = session.query(Match).get(self.match_id)
+        match = session.query(Match).get(self.play.match_id)
         user = session.query(User).get(self.user_id)
         claim = False
-        if self.type == 'winner':
-            sum = 0
-            for stat in stats:
-                sum += stat.value
-            if sum > match.sets // 2:
-                claim = True
-        else:
-            stat = stats[0]
-            if stat.value >= self.subtype:
-                claim = True
+        if match.result is not None:
+            if self.type == 'winner':
+                sum = 0
+                stats = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
+                    Stat.type == self.type,
+                    Result.play_id == self.play_id
+                ).all()
+                for stat in stats:
+                    sum += stat.value
+                if sum > match.sets // 2:
+                    claim = True
+            else:
+                stat = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(
+                    Stat.type == self.type,
+                    Result.play_id == self.play_id,
+                    Result.set == self.set,
+                ).first()
+                if stat is not None and stat.value >= self.subtype:
+                    claim = True
 
-        if claim and match.ini_date > self.date:
-            user.balance += round(self.amount * self.multiplier)
-            self.result = True
-        else:
-            self.result = False
+            if claim and datetime.strptime(match.ini_date, "%Y-%m-%dT%H:%M:%S.%fZ") > self.date:
+                user.balance += round(self.amount * self.multiplier)
+                self.result = True
+            else:
+                self.result = False
 
         session.commit()
 
