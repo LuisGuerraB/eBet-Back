@@ -1,5 +1,3 @@
-version: '3.1'
-
 services:
   api:
     build:
@@ -16,12 +14,12 @@ services:
 
   pgsql:
     container_name: pgsql
-    image: postgres:15
+    image: docker.io/library/postgres:15
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${PGSQL_ADMIN_PASS}
       POSTGRES_USER: ${PGSQL_ADMIN_USERNAME}
-      POSTGRES_DB : ${PGSQL_DATABASE_NAME}
+      POSTGRES_DB: ${PGSQL_DATABASE_NAME}
     volumes:
       - ${PGSQL_VOLUME}:/var/lib/postgresql/data
     command: -p ${PGSQL_PORT}

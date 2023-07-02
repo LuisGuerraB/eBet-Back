@@ -1,5 +1,5 @@
 # This is a slim Debian image with Python
-FROM python:3.9-slim-buster
+FROM docker.io/library/python:3.9-slim-buster
 
 # Copy and install requirements
 WORKDIR /root/lguerra
