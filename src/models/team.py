@@ -1,6 +1,7 @@
 from marshmallow import Schema, fields
 
 from database import db
+from src.models import LeagueSchema
 
 
 class Team(db.Model):
@@ -29,6 +30,7 @@ class TeamSchema(Schema):
     img = fields.String(metadata={'description': '#### Image of the Team'})
     website = fields.String(metadata={'description': '#### Website of the Team'})
     nationality = fields.String(metadata={'description': '#### Nationality of the Team'})
+    regular_league = fields.Nested(LeagueSchema, metadata={'description': '#### League of the Team'})
 
 class PlayTeamSchema(Schema):
     team = fields.Nested(TeamSchema, required=True, metadata={'description': '#### TeamId of the Participation'})

@@ -112,7 +112,7 @@ class Probability(db.Model):
 
 
 class ProbUnit(db.Model):
-    PROB_INI = 16
+    PROB_INI = 18
     JUMP = 2
     LEN_MIN = calc_len_min(PROB_INI, JUMP)
 

@@ -1,8 +1,4 @@
-from marshmallow import Schema, fields
-
 from database import db
-
-from .team import TeamSchema
 
 
 class Play(db.Model):

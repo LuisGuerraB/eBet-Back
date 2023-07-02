@@ -2,6 +2,7 @@ from marshmallow import Schema, fields
 from sqlalchemy import UniqueConstraint
 
 from database import db
+from .match import Match
 from .play import Play
 
 
@@ -77,6 +78,38 @@ class Result(db.Model):
                         res['away_team_result'].append(result)
             return res
 
+    @classmethod
+    def update_result_from_match(self, match, session=None):
+        if session is None:
+            session = db.session()
+        match_res = {}
+        results = session.query(Result).join(Play, Result.play_id == Play.id).filter(Play.match_id == match.id).all()
+        if len(results) == 0:
+            return
+        for result in results:
+            win_stat = next((stat.value for stat in result.stats if stat.type == 'winner'), None)
+            if win_stat is not None:
+                match_res[result.play.team.acronym] = match_res.get(result.play.team.acronym, 0) + win_stat
+        match.result = match_res
+        match.final_set = len(results) // 2
+
+    @classmethod
+    def get_statistics_from_team(self, team_id):
+        query = db.session.query(
+            Stat.type,
+            db.func.sum(Stat.value).label('sum_values'),
+            db.func.count(Stat.type).label('cont_values')
+        ).join(Result).join(Play).join(Match).filter(Play.team_id == team_id).filter(Match.id.in_(
+            db.session.query(Match.id).join(Play).filter(Play.team_id == team_id).filter(
+                Match.end_date.isnot(None)).order_by(Match.end_date.desc()).limit(10)
+        )).group_by(Stat.type)
+
+        # Ejecutar la consulta
+        result = []
+        for row in query.all():
+            result.append({'type': row.type, 'sum_values': row.sum_values, 'count_values': row.cont_values})
+        return result
+
     def __repr__(self):
         return f'<Result : {self.play_id} - {self.set} - {self.stats}>'
 
@@ -113,3 +146,9 @@ class ResultSchema(Schema):
 class ResultByMatchSchema(Schema):
     away_team_result = fields.Nested(ResultSchema, many=True, metadata={'description': '#### Away team odds'})
     local_team_result = fields.Nested(ResultSchema, many=True, metadata={'description': '#### Local team odds'})
+
+
+class TeamStatisticSchema(Schema):
+    type = fields.String(metadata={'description': '#### Type of the Stat'})
+    sum_values = fields.Integer(metadata={'description': '#### Sum of the values of the Stat'})
+    count_values = fields.Integer(metadata={'description': '#### Count of how much values of the Stat'})

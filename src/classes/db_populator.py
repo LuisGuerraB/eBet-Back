@@ -46,7 +46,7 @@ class DbPopulator:
 
             # Fill the DB with the results of finished matches
             for match in total_matches_with_results:
-                match.update_result(session=session)
+                Result.update_result(match, session=session)
                 sets = match.final_set if match.final_set is not None else match.sets
                 for set in range(sets):
                     for play in match.plays:
@@ -85,10 +85,10 @@ class DbPopulator:
             if match_obj is None:
                 if session.get(Tournament, match_json['tournamentId']) is None:
                     self.populate_tournaments(status, int(match_json['scheduledAt'][:4]),
-                                              int(match_json['scheduledAt'][5:7]),session=session)
+                                              int(match_json['scheduledAt'][5:7]), session=session)
                 if (session.get(Team, match_json['awayTeamId']) is None or
                         session.get(Team, match_json['homeTeamId']) is None):
-                    self.populate_teams(match_json['tournament']['serie']['league']['id'],session=session)
+                    self.populate_teams(match_json['tournament']['serie']['league']['id'], session=session)
                 match_obj = Match(
                     id=match_json['id'],
                     name=match_json['name'],
@@ -152,14 +152,15 @@ class DbPopulator:
             match_obj = session.get(Match, match_id)
             match_obj.end_date = result_json['endAt']
             match_obj.ini_date = result_json['beginAt']
-            for result_obj in [play.result for play in match_obj.plays if play.result is not None and len(play.result.stats) != 0]:
+            for result_obj in [play.result for play in match_obj.plays if
+                               play.result is not None and len(play.result.stats) != 0]:
                 if result_obj.set == set:
                     load = False
             if load:
                 Result.create_from_web_json(session, result_json, match_id, set)
         match_obj = session.get(Match, match_id)
         if match_obj.end_date is not None:
-            match_obj.update_result(session=session)
+            Result.update_result(match_obj, session=session)
         session.commit()
         return
 

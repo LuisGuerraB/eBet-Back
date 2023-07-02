@@ -29,6 +29,7 @@ def get_match(match_id):
 @match_blp.response(200, MatchListSchema)
 def get_list_match(params):
     matches = Match.get_list(params.get('league_id', None),
+                             params.get('team_id', None),
                              params.get('finished', None),
                              params.get('year', None),
                              params.get('month', None),
