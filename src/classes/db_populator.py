@@ -48,9 +48,9 @@ class DbPopulator:
             for match in total_matches_with_results:
                 Result.update_result_from_match(match, session=session)
                 sets = match.final_set if match.final_set is not None else match.sets
-                for set in range(sets):
-                    plays = session.query(Play).filter(Play.match_id == match.id)
-                    for play in plays:
+                plays = session.query(Play).filter(Play.match_id == match.id).all()
+                for play in plays:
+                    for set in range(sets):
                         result = session.query(Result).filter_by(play_id=play.id, set=set + 1).first()
                         if result is None:
                             self.populate_result(match.id, set + 1, session=session)
