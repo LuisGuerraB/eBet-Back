@@ -20,10 +20,10 @@ class Participation(db.Model):
 
     @classmethod
     def get_standings(cls, league_id: int):
-        regular_tournament = Tournament.get_regular_tournament(league_id)
-        if regular_tournament is None:
+        regular_tournaments = Tournament.get_regular_tournaments(league_id)
+        if regular_tournaments is None:
             raise Exception('control-error.no-regular-tournament')
-        return Participation.query.filter(cls.tournament_id == regular_tournament.id).order_by(cls.position).all()
+        return Participation.query.filter(cls.tournament_id == regular_tournaments[0].id).order_by(cls.position).all()
 
 
 class ParticipationSchema(Schema):
