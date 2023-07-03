@@ -26,7 +26,7 @@ def load_user(user_id: int):
     return user
 
 
-CORS(app, origins="http://localhost:30890", methods=["GET", "POST", "PUT", "DELETE"], supports_credentials=True)
+CORS(app, origins="http://bahia.ugr.es:30890", methods=["GET", "POST", "PUT", "DELETE"], supports_credentials=True)
 app.config.from_object('config.Config')
 
 # Initialize extensions
