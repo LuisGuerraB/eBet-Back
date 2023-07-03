@@ -1,7 +1,5 @@
 from datetime import datetime
 from operator import or_
-from flask_smorest import abort
-
 from marshmallow import Schema, fields, validate
 
 from database import db

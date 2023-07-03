@@ -10,7 +10,7 @@ class League(db.Model):
     name = db.Column(db.String(), unique=True, nullable=False)
     acronym = db.Column(db.String(), unique=True, nullable=False)
     img = db.Column(db.String(), unique=True, nullable=False)
-    esport_id = db.Column(db.Integer(), db.ForeignKey('esport.id'), nullable=False)
+    esport_id = db.Column(db.Integer(), db.ForeignKey('esport.id'), server_default='1', nullable=False)
 
     esport: db.Mapped['Esport'] = db.relationship('Esport', back_populates='leagues')
     tournaments: db.Mapped[list['Tournament']] = db.relationship('Tournament', back_populates='league')

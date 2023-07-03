@@ -31,9 +31,10 @@ def upgrade() -> None:
     )
     op.create_table('participation',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('position', sa.Integer(), nullable=True),
-    sa.Column('tournament_id', sa.Integer(), nullable=True),
-    sa.Column('team_id', sa.Integer(), nullable=True),
+    sa.Column('position', sa.Integer(), nullable=False),
+    sa.Column('points', sa.Integer(), nullable=False),
+    sa.Column('tournament_id', sa.Integer(), nullable=False),
+    sa.Column('team_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['tournament_id'], ['tournament.id'], ),
     sa.ForeignKeyConstraint(['team_id'], ['team.id'], ),
     sa.PrimaryKeyConstraint('id')
