@@ -1,4 +1,5 @@
 .env
-static/
+static/*
+!static/users_profile/user.svg
 db-local.env
 alembic.ini
