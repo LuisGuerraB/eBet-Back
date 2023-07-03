@@ -3,7 +3,6 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'secret-secure-key-default'
-    REMEMBER_COOKIE_SAMESITE = 'None'
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI') or 'postgresql://username:password@localhost/database-name'
     API_TITLE = "api"
     API_VERSION = "v1"
@@ -13,6 +12,7 @@ class Config:
     OPENAPI_SWAGGER_UI_PATH = "swagger"
     OPENAPI_SWAGGER_UI_VERSION = "3.22.2"
     PERMANENT_SESSION_LIFETIME = 86400  # Expiration 1 day
+    REMEMBER_COOKIE_DURATION = 86400  # Expiration 1 day
 
     # Gmail configuration
     MAIL_SERVER = 'smtp.gmail.com'
