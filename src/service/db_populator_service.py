@@ -22,6 +22,7 @@ db_populator_blp = Blueprint(
 def tournaments(year, month):
     try:
         DbPopulator().populate_tournaments(MatchStatus.NOT_STARTED, year, month)
+        DbPopulator().populate_tournaments(MatchStatus.FINISHED, year, month)
     except Exception as e:
         abort(400, message=str(e))
 

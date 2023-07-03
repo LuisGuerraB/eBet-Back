@@ -31,7 +31,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('acronym', sa.String(), nullable=False),
     sa.Column('img', sa.String(), nullable=False),
-    sa.Column('esport_id', sa.Integer(), nullable=False),
+    sa.Column('esport_id', sa.Integer(),server_default='1', nullable=False),
     sa.ForeignKeyConstraint(['esport_id'], ['esport.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('img'),

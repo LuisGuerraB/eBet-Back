@@ -76,7 +76,7 @@ class ApiScrapperLol(ApiScrapperInterface):
                 {
                     'status': status.value,
                     'leagueId': None,
-                    'limit': 200,
+                    'limit': 500,
                     'year': year,
                     'month': month,
                     'page': 0
