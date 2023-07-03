@@ -1,19 +1,19 @@
 services:
-  api:
+  ebet-api:
     build:
       context: .
       dockerfile: container/api.dockerfile
-    container_name: api
+    container_name: ebet-api
     restart: unless-stopped
     ports:
       - ${FLASK_PORT_MAPPING}
     depends_on:
-      - pgsql
+      - ebet-pgsql
     env_file:
       - ./.env
 
-  pgsql:
-    container_name: pgsql
+  ebet-pgsql:
+    container_name: ebet-pgsql
     image: docker.io/library/postgres:15
     restart: unless-stopped
     environment:
