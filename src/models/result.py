@@ -92,6 +92,7 @@ class Result(db.Model):
                 match_res[result.play.team.acronym] = match_res.get(result.play.team.acronym, 0) + win_stat
         match.result = match_res
         match.final_set = len(results) // 2
+        session.commit()
 
     @classmethod
     def get_statistics_from_team(self, team_id):

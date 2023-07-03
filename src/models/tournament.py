@@ -18,12 +18,12 @@ class Tournament(db.Model):
     matches: db.Mapped[list['Match']] = db.relationship('Match', back_populates='tournament')
 
     @classmethod
-    def get_regular_tournament(cls, league_id: int):
-        regular_tournament = Tournament.query.filter(Tournament.league_id == league_id, Tournament.name.ilike('%regular%')).order_by(
-            Tournament.ini_date.desc()).first()
-        if regular_tournament is None:
+    def get_regular_tournaments(cls, league_id: int):
+        regular_tournaments = Tournament.query.filter(Tournament.league_id == league_id, Tournament.name.ilike('%regular%')).order_by(
+            Tournament.ini_date.desc()).all()
+        if regular_tournaments is None:
             return None
-        return regular_tournament
+        return regular_tournaments
 
 
 class TournamentSchema(Schema):

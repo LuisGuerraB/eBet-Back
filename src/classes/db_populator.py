@@ -46,6 +46,8 @@ class DbPopulator:
 
             # Fill the DB with the results of finished matches
             for match in total_matches_with_results:
+                if match is None:
+                    raise Exception(str(match))
                 Result.update_result_from_match(match, session=session)
                 sets = match.final_set if match.final_set is not None else match.sets
                 plays = session.query(Play).filter(Play.match_id == match.id).all()
@@ -168,8 +170,8 @@ class DbPopulator:
     def populate_teams(self, league_id, session=None):
         if session is None:
             session = db.session()
-        regular_tournament = Tournament.get_regular_tournament(league_id)
-        if regular_tournament is not None:
+        regular_tournaments = Tournament.get_regular_tournaments(league_id)
+        for regular_tournament in regular_tournaments:
             team_list = self.api_scrapper.get_teams(regular_tournament.id)
             for team in team_list:
                 team_json = team['team']
