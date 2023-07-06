@@ -7,7 +7,7 @@ from .api_scrapper_interface import ApiScrapperInterface
 from .scheduler import Scheduler
 from src.enums import MatchStatus
 from .api_scrapper_lol import ApiScrapperLol
-from src.models import Match, Tournament, League, Result, Team, Participation, Probability, Play, Bet
+from src.models import Match, Tournament, League, Result, Team, Participation, Probability, Play, Bet, BettingOdd
 import datetime
 
 
@@ -49,7 +49,7 @@ class DbPopulator:
                 if match is None:
                     raise Exception(str(match))
                 Result.update_result_from_match(match, session=session)
-                sets = match.final_set if match.final_set is not None else match.sets
+                sets = match.get_final_number_of_sets() if match.get_final_number_of_sets() is not None else match.sets
                 plays = session.query(Play).filter(Play.match_id == match.id).all()
                 for play in plays:
                     for set in range(sets):
@@ -135,7 +135,6 @@ class DbPopulator:
                 tournament_obj = Tournament(
                     id=tournament_json['id'],
                     name=tournament_json['name'],
-                    serie_id=tournament_json['serie']['id'],
                     ini_date=tournament_json['beginAt'],
                     end_date=tournament_json['endAt'],
                     league_id=league_json['id']
@@ -151,21 +150,17 @@ class DbPopulator:
         if result_json:
             if session.get(Match, match_id) is None:  # If doesn't exist match at DB
                 self.populate_matches(MatchStatus.FINISHED, year=int(result_json['beginAt'][:4]),
-                                      month=int(result_json['beginAt'][5:7]), limit=100, session=session)
+                                      month=int(result_json['beginAt'][5:7]), limit=500, session=session)
             match_obj = session.get(Match, match_id)
-            match_obj.end_date = result_json['endAt']
-            match_obj.ini_date = result_json['beginAt']
             for result_obj in [play.result for play in match_obj.plays if
                                play.result is not None and len(play.result.stats) != 0]:
                 if result_obj.set == set:
                     load = False
             if load:
                 Result.create_from_web_json(session, result_json, match_id, set)
-        match_obj = session.get(Match, match_id)
-        if match_obj.end_date is not None:
             Result.update_result_from_match(match_obj, session=session)
-        session.commit()
-        return
+            session.commit()
+            return result_json
 
     def populate_teams(self, league_id, session=None):
         if session is None:
@@ -207,7 +202,7 @@ class DbPopulator:
         league_id_of_match = match.tournament.league_id
         for play in match.plays:
             self.populate_teams(league_id_of_match, session=session)
-            probabilities = Probability.query.filter(
+            probabilities = session.query(Probability).filter(
                 Probability.team_id == play.team_id,
                 or_(Probability.league_id == league_id_of_match, Probability.league_id == None)
             ).all()
@@ -215,6 +210,9 @@ class DbPopulator:
                 prob.updated = False
             self.populate_probabilites(play.team_id, league_id_of_match, session=session)
             self.populate_probabilites(play.team_id, session=session)
+            betting_odds = session.query(BettingOdd).join(Play, BettingOdd.play_id == Play.id).filter(Play.team_id==play.team_id).all()
+            for betting_odd in betting_odds:
+                betting_odd.updated = False
         session.commit()
 
     def resolve_bets(self, match, session):

@@ -41,7 +41,6 @@ def upgrade() -> None:
     op.create_table('tournament',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('serie_id', sa.Integer(), nullable=False),
     sa.Column('ini_date', sa.Date(), nullable=False),
     sa.Column('end_date', sa.Date(), nullable=True),
     sa.Column('league_id', sa.Integer(), nullable=True),
