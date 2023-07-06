@@ -90,7 +90,7 @@ class Bet(db.Model):
         match = session.query(Match).get(self.play.match_id)
         user = session.query(User).get(self.user_id)
         claim = False
-        if match.result is not None:
+        if match.get_final_number_of_sets() is not None:
             if self.type == 'winner':
                 sum = 0
                 stats = session.query(Stat).join(Result, Stat.result_id == Result.id).filter(

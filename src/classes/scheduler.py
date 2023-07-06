@@ -1,11 +1,12 @@
 from datetime import date
+import time
 
 from apscheduler.triggers.cron import CronTrigger
 from flask_apscheduler import APScheduler
 
 from database import db
 from src.enums import MatchStatus
-from src.models import Match
+from src.models import Match, Result
 
 
 class Scheduler:
@@ -71,16 +72,20 @@ class Scheduler:
         for set in range(1, sets + 1):
             self._scheduler.add_job(id=f'update_{match_id}_{set}', func=lambda: self.update_result(match_id, set),
                                     trigger='interval', minutes=3)
+            time.sleep(1)
 
     def update_result(self, match_id, set):
         with self._scheduler.app.app_context():
             session = db.session(expire_on_commit=False)
-            self.db_populator.populate_result(match_id, set, session=session)
+            result_json = self.db_populator.populate_result(match_id, set, session=session)
             match = Match.query.get(match_id)
-            if match.end_date is not None:
+            Result.update_result_from_match(match, session)
+            if (result_json is not None and result_json.get('endAt', None) is not None) or match.get_final_number_of_sets() is not None:
                 self._scheduler.remove_job(f'update_{match_id}_{set}')
                 self.db_populator.update_data_from_match(match, session=session)
                 self.db_populator.resolve_bets(match, session=session)
+                if match.get_final_number_of_sets() is not None:
+                    match.end_date = result_json['endAt']
 
     def populate_matches(self):
         with self._scheduler.app.app_context():

@@ -12,9 +12,7 @@ class Match(db.Model):
     __tablename__ = 'match'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
     sets = db.Column(db.Integer, nullable=False)
-    final_set = db.Column(db.Integer, nullable=True)
     plan_date = db.Column(db.DateTime, nullable=False)
     ini_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
@@ -44,6 +42,15 @@ class Match(db.Model):
                 query = query.filter(cls.end_date.is_(None)).order_by(Match.plan_date.asc())
         matches = query.paginate(page=page, per_page=limit)
         return matches.items
+
+    def get_final_number_of_sets(self):
+        if self.result is not None and len(self.result) > 0:
+            for team, winning in self.result.entries():
+                if winning > self.sets:
+                    return sum(self.result.values())
+            return None
+        else:
+            return None
 
 
 class MatchSchema(Schema):

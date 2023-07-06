@@ -66,8 +66,8 @@ class Probability(db.Model):
         matches = [play.match for play in plays if play.match is not None]
         if len(results) != 0:
             prob_finished_early = ProbUnit.calc_prob(
-                [1 if match.final_set is not None and match.sets > match.final_set else 0 for match in matches if
-                 match.sets != 1], force=True)
+                [1 if match.get_final_number_of_sets is not None and match.sets > match.get_final_number_of_sets else 0
+                 for match in matches if match.sets != 1], force=True)
             if probability is None:
                 probability = Probability(team_id=team_id, league_id=league_id)
                 session.add(probability)
