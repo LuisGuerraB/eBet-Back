@@ -46,7 +46,7 @@ class Match(db.Model):
     def get_final_number_of_sets(self):
         if self.result is not None and len(self.result) > 0:
             for team, winning in self.result.items():
-                if winning > self.sets:
+                if winning > self.sets//2:
                     return sum(self.result.values())
             return None
         else:

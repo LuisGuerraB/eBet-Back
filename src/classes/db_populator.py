@@ -65,6 +65,10 @@ class DbPopulator:
             # Fill the DB with the probabilities of teams in general
             teams = Team.query.all()
             for team in teams:
+                prob = session.query(Probability).filter(Probability.team_id == team.id,
+                                                         Probability.league_id is None).first()
+                if prob is not None:
+                    prob.updated = False
                 Probability.create_probabilities_from_team_at_league(team.id, session=session)
 
     def populate_probabilites(self, team_id, league_id=None, session=None):
@@ -108,6 +112,7 @@ class DbPopulator:
                 if session.get(Team, match_json['awayTeamId']) is not None:
                     play_away = Play(team_id=match_json['awayTeamId'], match_id=match_obj.id, local=False)
                     session.add(play_away)
+            match_obj.plan_date = match_json['scheduledAt']
             match_obj.ini_date = match_json['beginAt']
             match_obj.end_date = match_json['endAt']
             if match_json['endAt']:
@@ -210,7 +215,8 @@ class DbPopulator:
                 prob.updated = False
             self.populate_probabilites(play.team_id, league_id_of_match, session=session)
             self.populate_probabilites(play.team_id, session=session)
-            betting_odds = session.query(BettingOdd).join(Play, BettingOdd.play_id == Play.id).filter(Play.team_id==play.team_id).all()
+            betting_odds = session.query(BettingOdd).join(Play, BettingOdd.play_id == Play.id).filter(
+                Play.team_id == play.team_id).all()
             for betting_odd in betting_odds:
                 betting_odd.updated = False
         session.commit()
