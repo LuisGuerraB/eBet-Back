@@ -28,16 +28,16 @@ class Bet(db.Model):
     user: db.Mapped['User'] = db.relationship('User', back_populates='bets')
 
     @classmethod
-    def exist(cls, match_id, team_id, user_id, type, subtype=None) -> bool:
+    def exist(cls, match_id, team_id, user_id, type, set, subtype=None) -> bool:
         play = Play.query.filter(Play.match_id == match_id, Play.team_id == team_id).first()
         return cls.query.filter(cls.play_id == play.id, cls.user_id == user_id, cls.type == type,
-                                cls.subtype == subtype).first()
+                                cls.subtype == subtype, cls.set == set).first()
 
     @classmethod
     def create(self, user, **params):
         if user.balance < params['amount']:
             raise Exception("insuficient-funds")
-        if Bet.exist(params['match_id'], params['team_id'], user.id, params['type'], params.get('subtype', None)):
+        if Bet.exist(params['match_id'], params['team_id'], user.id, params['type'], params.get('set'), params.get('subtype', None)):
             raise Exception("existing-bet")
         with db.session() as session:
             play = session.query(Play).filter_by(match_id=params['match_id'], team_id=params['team_id']).first()
