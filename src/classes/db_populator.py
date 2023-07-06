@@ -49,7 +49,7 @@ class DbPopulator:
                 if match is None:
                     raise Exception(str(match))
                 Result.update_result_from_match(match, session=session)
-                sets = match.get_final_number_of_sets if match.get_final_number_of_sets is not None else match.sets
+                sets = match.get_final_number_of_sets() if match.get_final_number_of_sets() is not None else match.sets
                 plays = session.query(Play).filter(Play.match_id == match.id).all()
                 for play in plays:
                     for set in range(sets):
