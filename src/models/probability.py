@@ -171,10 +171,7 @@ class ProbUnit(db.Model):
         res = {}
         for i in range(3):
             prob_res[i] = round(prob_res[i] / 100.0, 2)
-            if len_min or force:
-                res[multiplier[i]] = cls.justify_probability(prob_res[i])
-            elif 1 > prob_res[i] > 0:
-                res[multiplier[i]] = prob_res[i]
+            res[multiplier[i]] = cls.justify_probability(prob_res[i])
         return res
 
     def __repr__(self):
