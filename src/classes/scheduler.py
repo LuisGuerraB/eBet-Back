@@ -86,6 +86,7 @@ class Scheduler:
                 self.db_populator.resolve_bets(match, session=session)
                 if match.get_final_number_of_sets() is not None:
                     match.end_date = result_json['endAt']
+                    session.commit()
 
     def populate_matches(self):
         with self._scheduler.app.app_context():
