@@ -110,7 +110,12 @@ class Bet(db.Model):
                 if stat is not None and stat.value >= self.subtype:
                     claim = True
 
-            if claim and datetime.strptime(match.ini_date, "%Y-%m-%dT%H:%M:%S.%fZ") > self.date:
+            if type(match.ini_date) is not datetime:
+                match_date = datetime.strptime(match.ini_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                match_date = match.ini_date
+
+            if claim and match_date > self.date:
                 user.balance += round(self.amount * self.multiplier)
                 self.result = True
             else:
