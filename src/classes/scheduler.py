@@ -84,10 +84,7 @@ class Scheduler:
                 self._scheduler.remove_job(f'update_{match_id}_{set}')
                 self.db_populator.update_data_from_match(match, session=session)
                 self.db_populator.resolve_bets(match, session=session)
-                if match.get_final_number_of_sets() is not None:
-                    match = session.query(Match).get(match_id)
-                    match.end_date = result_json['endAt']
-                    session.commit()
+                session.commit()
 
     def populate_matches(self):
         with self._scheduler.app.app_context():

@@ -1,9 +1,8 @@
 from flask_smorest import Blueprint, abort
-from database import db
 
 from src.classes import DbPopulator, MatchPopulateSchema, Scheduler
 from src.enums import MatchStatus
-from src.models import ProbabilityCreateSchema, Bet
+from src.models import ProbabilityCreateSchema
 
 api_url = '/populator'
 api_name = 'Populator'

@@ -163,6 +163,8 @@ class DbPopulator:
             if load:
                 Result.create_from_web_json(session, result_json, match_id, set)
             Result.update_result_from_match(match_obj, session=session)
+            if match_obj.get_final_number_of_sets() is not None:
+                match_obj.end_date = result_json['endAt']
             session.commit()
             return result_json
 
