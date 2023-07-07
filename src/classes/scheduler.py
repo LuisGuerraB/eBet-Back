@@ -70,7 +70,7 @@ class Scheduler:
 
     def wake_up_result_scrapping(self, match_id, sets):
         for set in range(1, sets + 1):
-            self._scheduler.add_job(id=f'update_{match_id}_{set}', func=lambda: self.update_result(match_id, set),
+            self._scheduler.add_job(id=f'update_{match_id}_{set}', func=lambda num=set: self.update_result(match_id, num),
                                     trigger='interval', minutes=3)
             time.sleep(1)
 
@@ -85,6 +85,7 @@ class Scheduler:
                 self.db_populator.update_data_from_match(match, session=session)
                 self.db_populator.resolve_bets(match, session=session)
                 if match.get_final_number_of_sets() is not None:
+                    match = session.query(Match).get(match_id)
                     match.end_date = result_json['endAt']
                     session.commit()
 

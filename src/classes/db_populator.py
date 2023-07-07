@@ -98,7 +98,6 @@ class DbPopulator:
                     self.populate_teams(match_json['tournament']['serie']['league']['id'], session=session)
                 match_obj = Match(
                     id=match_json['id'],
-                    name=match_json['name'],
                     sets=match_json['numberOfGames'],
                     plan_date=match_json['scheduledAt'],
                     tournament_id=match_json['tournamentId'],
