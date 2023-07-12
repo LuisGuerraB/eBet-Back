@@ -19,7 +19,7 @@ team_blp = Blueprint(
 def get_team(team_id):
     team = Team.query.get(team_id)
     if team is None:
-        abort(404, message='No team with provided Id')
+        abort(404, message='control-error.no-team')
     regular_league = League.query.get(team.league_id)
     team_dump = TeamSchema().dump(team)
     team_dump['regular_league'] = regular_league

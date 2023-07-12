@@ -19,5 +19,5 @@ probability_blp = Blueprint(
 def get_probability(probability_id):
     probability = Probability.query.get(probability_id)
     if probability is None:
-        abort(404, message='No probability with provided Id')
+        abort(404, message='control-error.not-probabilities-found')
     return probability

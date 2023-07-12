@@ -81,7 +81,7 @@ def buy_prize(email, prize_id):
         if prize is None or prize.amount < 1:
             abort(404, message='control-error.no-prize-found')
         if current_user.balance < prize.price:
-            abort(404, message='control-error.insufficient-balance')
+            abort(404, message='control-error.insuficient-funds')
         prize.buy(session)
         current_user.balance -= prize.price
         mail = Mail(current_app)

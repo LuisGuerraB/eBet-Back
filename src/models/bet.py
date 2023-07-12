@@ -37,6 +37,8 @@ class Bet(db.Model):
     def create(self, user, **params):
         if user.balance < params['amount']:
             raise Exception("insuficient-funds")
+        if 0 > params['amount']:
+            raise Exception("bad-amount")
         if Bet.exist(params['match_id'], params['team_id'], user.id, params['type'], params.get('set'), params.get('subtype', None)):
             raise Exception("existing-bet")
         with db.session() as session:

@@ -19,7 +19,7 @@ match_blp = Blueprint(
 def get_match(match_id):
     match = Match.query.get(match_id)
     if match is None:
-        abort(404, message='control-error.no-match')
+        abort(404, message='control-error.match-not-found')
     return match
 
 

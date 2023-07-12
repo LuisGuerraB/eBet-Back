@@ -27,3 +27,8 @@ Lastly upgrade sqlalchemy, due to a downgrade made by the installation of sqlaco
 ```
 pip install --upgrade sqlalchemy
 ```
+
+# Running Tests
+```
+python -m pytest --disable-warnings tests
+```

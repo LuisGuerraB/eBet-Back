@@ -80,7 +80,7 @@ def redeem_prize():
     if current_user.redeem_prize():
         return 201
     else:
-        abort(404, message='prize-unredeemable')
+        abort(404, message='control-error.prize-unredeemable')
 
 
 @user_blp.route(api_url + '/privileges', methods=['GET'])
@@ -119,7 +119,7 @@ def update_user_img():
     if not request.files.get('file'):
         abort(404, message='control-error.no-img')
     if not allowed_file(request.files.get('file').filename):
-        abort(404, message='control-error.img-format')
+        abort(404, message='control-error.invalid-img')
     file = request.files.get('file')
     try:
         saving_route = current_user.update_img(file)

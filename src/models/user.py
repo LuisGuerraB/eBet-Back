@@ -60,7 +60,8 @@ class User(db.Model, UserMixin):
                 privileges.append(Privilege.ADMIN.value)
                 privileges.append(Privilege.MARKETING.value)
             if p == 'm':
-                privileges.append(Privilege.MARKETING.value)
+                if not self.has_privilege(Privilege.MARKETING):
+                    privileges.append(Privilege.MARKETING.value)
         return privileges
 
     def update_img(self, img_file):
