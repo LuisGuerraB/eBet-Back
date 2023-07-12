@@ -1,5 +1,5 @@
 .env
 static/*
 !static/users_profile/user.svg
-db-local.env
+back.env
 alembic.ini

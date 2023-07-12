@@ -2,7 +2,7 @@ services:
   ebet-api:
     build:
       context: .
-      dockerfile: container/api.dockerfile
+      dockerfile: container/api.pod
     container_name: ebet-api
     restart: unless-stopped
     ports:
