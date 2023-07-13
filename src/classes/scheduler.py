@@ -60,7 +60,7 @@ class Scheduler:
                                             match_json['scheduledAt'])
 
     def schedule_repopulate_matches(self):
-        trigger = CronTrigger(day_of_week='sun', hour=0, minute=0)
+        trigger = CronTrigger(hour=0, minute=0)
         self._scheduler.add_job(id='repopulate_matches', func=lambda: self.populate_matches(), trigger=trigger)
 
     def add_match_to_scheduler(self, match_id, sets, start_date):

@@ -40,6 +40,7 @@ scheduler.start()
 scheduler.remove_all_jobs()
 
 scheduler.schedule_matches()
+scheduler.schedule_repopulate_matches()
 
 url_prefix = '/' + app.config["API_TITLE"] + '/' + app.config["API_VERSION"]
 
